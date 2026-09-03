@@ -354,8 +354,19 @@ export class Pipe {
 
       while (array && array.length) {
         let byte_length = new Int32Array(array.buffer.slice(0, 4))[0];
-        let response = messages.CallResponse.deserializeBinary(array.slice(4, byte_length + 4));
-        stack.push(response);
+        try {
+          let response = messages.CallResponse.deserializeBinary(array.slice(4, byte_length + 4));
+          stack.push(response);
+        }
+        catch (e) {
+
+          // a frame the runtime refuses (invalid UTF-8 in a string field,
+          // typically). log it and carry on with the next one, so that a
+          // single bad message does not take the prompt down with it.
+
+          console.error("dropping console frame:", e.message || e,
+            Buffer.from(array.slice(4, Math.min(byte_length + 4, 260))).toString("hex"));
+        }
         array = array.slice(byte_length + 4);
       }
 

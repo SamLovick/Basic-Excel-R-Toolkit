@@ -42,11 +42,11 @@ int R_ReadConsole(const char *prompt, char *buf, int len, int addtohistory) {
  */
 void R_WriteConsoleEx(const char *buf, int len, int flag) {
 
-  // from 4.2.0 R for Windows uses UTF-8 as its native encoding, so the
-  // buffer goes straight through. it is not validated first either: output
-  // that arrives in pieces could split a multi-byte character across two
-  // calls, and the fragment would fail validation and be mangled by the
-  // code-page conversion below.
+  // when R's native encoding is UTF-8 (4.2.0 or later, in a process with
+  // the UTF-8 code page; see main) the buffer goes straight through. it is
+  // not validated first either: output that arrives in pieces could split
+  // a multi-byte character across two calls, and the fragment would fail
+  // validation and be mangled by the code-page conversion below.
 
   if (r_console_utf8) {
     return ConsoleMessage(buf, len, flag);

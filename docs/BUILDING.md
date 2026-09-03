@@ -80,6 +80,17 @@ R for Windows has shipped x64 binaries only since 4.2.0, so the ARM64X
 libraries are built from the x64 export lists, and the `-x86` switch is only
 useful with an R old enough to include an i386 build.
 
+### The UTF-8 code page manifest
+
+`ControlR/controlr.manifest` is embedded in `ControlR.exe` and asks Windows
+for the UTF-8 code page. R 4.2.0 and later use UTF-8 as their native
+encoding only in a process that has it (R's own executables carry the same
+manifest setting); without it, R embedded in the controller falls back to
+the system code page, and strings outside that code page cannot exist in
+the R session. The setting needs Windows 10 version 1903 or later and is
+ignored on older systems. The controller checks the resulting code page at
+startup and converts console text when it is not UTF-8.
+
 ### Why `R_LEGACY_RCOMPLEX` is defined
 
 From 4.3.0, `R_ext/Complex.h` defines `Rcomplex` as a union whose second

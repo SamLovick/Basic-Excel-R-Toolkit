@@ -23,6 +23,12 @@ const WindowState = require('electron-window-state');
 
 remote.initialize();
 
+// for automated testing: expose the devtools protocol on this port, so a
+// test can drive the console and read its state without touching the UI
+if (process.env.BERT_CONSOLE_DEBUG_PORT) {
+  app.commandLine.appendSwitch('remote-debugging-port', process.env.BERT_CONSOLE_DEBUG_PORT);
+}
+
 let dev_flags = 0;
 let pipe_list = [];
 let management_pipe = "";

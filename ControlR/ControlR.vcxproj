@@ -58,6 +58,9 @@
   <ItemGroup>
     <None Include="..\PB\variable.proto" />
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="controlr.manifest" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{ADE9DA3C-93BF-4469-83B7-FBC015B6497F}</ProjectGuid>

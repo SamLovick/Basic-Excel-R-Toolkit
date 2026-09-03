@@ -57,9 +57,14 @@ branch (see the encoding note at the top of
 2. **Strings in from Excel and the console** are marked UTF-8
    (`Rf_mkCharLenCE` with `CE_UTF8`). The add-in converts Excel's UTF-16
    strings and COM names to UTF-8, so the bytes are UTF-8 on every R version.
-3. **Console output and input** are converted to and from the Windows code
-   page only under an R older than 4.2.0, decided once at startup from the
-   version R reports.
+3. **Console output and input** pass through untouched when R's native
+   encoding is UTF-8, which needs both R 4.2.0 or later and a process with
+   the UTF-8 code page. `ControlR.exe` now carries the same manifest setting
+   R's own executables use to get that code page (see `BUILDING.md`); the
+   controller checks `GetACP()` at startup and otherwise converts to and
+   from the code page. Console messages are also built from the length R
+   supplies rather than a terminating NUL, which the stricter UTF-8 checks
+   in google-protobuf 4 turned from a latent bug into dropped messages.
 4. **Paths** are the remaining gap. The add-in lists the functions directory
    with the ANSI file APIs, so file names reach the controller in the Windows
    code page, and `source()` is given them as native strings. That is right

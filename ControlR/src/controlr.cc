@@ -108,8 +108,14 @@ void ConsolePrompt(const char *prompt, uint32_t id) {
 
 void ConsoleMessage(const char *buf, int len, int flag) {
   BERTBuffers::CallResponse message;
-  if (flag) message.mutable_console()->set_err(buf);
-  else message.mutable_console()->set_text(buf);
+
+  // R passes a length, and the buffer is not necessarily terminated there.
+  // reading past it sent whatever followed, which the console's protobuf
+  // runtime rejects as invalid UTF-8, losing the message.
+
+  if (len < 0) len = (int)strlen(buf);
+  if (flag) message.mutable_console()->set_err(buf, len);
+  else message.mutable_console()->set_text(buf, len);
   PushConsoleMessage(message);
 }
 
@@ -571,9 +577,13 @@ int main(int argc, char** argv) {
       << ".x series this build was tested with; continuing" << std::endl;
   }
 
-  // R for Windows has written console output in UTF-8 since 4.2.0. see
-  // R_WriteConsoleEx in rinterface_win.cc for what this controls.
-  r_console_utf8 = (major > 4 || (major == 4 && minor >= 2));
+  // R for Windows uses UTF-8 as its native encoding from 4.2.0, but only
+  // when the process has the UTF-8 code page, which controlr.manifest asks
+  // for. otherwise R uses the system code page and console text has to be
+  // converted. see R_WriteConsoleEx in rinterface_win.cc.
+  r_console_utf8 = (major > 4 || (major == 4 && minor >= 2)) && (GetACP() == CP_UTF8);
+  std::cout << "process code page " << GetACP() << "; console text "
+    << (r_console_utf8 ? "passes through as UTF-8" : "is converted from the code page") << std::endl;
 
   std::stringstream ss;
   ss << "R::" << major << "." << minor << "." << patch;
