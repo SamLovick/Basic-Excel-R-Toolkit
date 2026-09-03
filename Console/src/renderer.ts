@@ -173,7 +173,7 @@ let pipe_list = (process.env['BERT_PIPE_NAME']||"").split(";"); // separator?
 // wait until we have read prefs once, then set up.
 // FIXME: is that necessary? we could just repaint.
 
-ConfigManager.filter(x => x.config).first().subscribe(x => {
+ConfigManager.pipe(Rx.filter(x => x.config), Rx.first()).subscribe(x => {
 
   let shell_config = x.config.shell || {};
 
@@ -267,7 +267,7 @@ ConfigManager.subscribe(x => {
 
 // deal with splitter change on drag end 
 
-splitter.events.filter(x => (x === SplitterEvent.EndDrag||x === SplitterEvent.UpdateLayout)).subscribe(x => {
+splitter.events.pipe(Rx.filter(x => (x === SplitterEvent.EndDrag||x === SplitterEvent.UpdateLayout))).subscribe(x => {
   terminals.UpdateLayout();
   editor.UpdateLayout();
   properties.terminal.split = splitter.split;
@@ -370,7 +370,7 @@ window.addEventListener("resize", event => {
 
 });
 
-TerminalImplementation.events.filter(x => (x.type === "release-focus")).subscribe(x => {
+TerminalImplementation.events.pipe(Rx.filter(x => (x.type === "release-focus"))).subscribe(x => {
   editor.Focus();
 });
 

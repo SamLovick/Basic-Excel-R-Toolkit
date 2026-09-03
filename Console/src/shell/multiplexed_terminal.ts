@@ -91,7 +91,7 @@ export class MultiplexedTerminal {
     // subscribe to preference changes. the filter ignores the 
     // initial state where preferences = null.
 
-    ConfigManager.filter(x => x.config).subscribe(x => this.SetPreferences(x.config.shell||{}));
+    ConfigManager.pipe(Rx.filter(x => x.config)).subscribe(x => this.SetPreferences(x.config.shell||{}));
 
   }
 

@@ -72,7 +72,7 @@ class ConfigManager extends Rx.BehaviorSubject<ConfigState> {
 
     this.ReadConfig().then(() => {
       FileWatcher.Watch(this.config_path);
-      FileWatcher.events.filter( x => (x === this.config_path)).subscribe(x => {
+      FileWatcher.events.pipe(Rx.filter(x => (x === this.config_path))).subscribe(x => {
        this.ReadConfig();
       });
     });

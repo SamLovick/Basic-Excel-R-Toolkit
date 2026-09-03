@@ -17,6 +17,7 @@
  * along with BERT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import * as Rx from 'rxjs';
 import less from 'less';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -41,7 +42,7 @@ export class UserStylesheet {
 
       // subscribe to changes
       FileWatcher.Watch(this.stylesheet_path_);
-      FileWatcher.events.filter(x => x === this.stylesheet_path_).subscribe(x => {
+      FileWatcher.events.pipe(Rx.filter(x => x === this.stylesheet_path_)).subscribe(x => {
         this.Load().then(() => {}).catch(err => {
           console.warn(err);
         });

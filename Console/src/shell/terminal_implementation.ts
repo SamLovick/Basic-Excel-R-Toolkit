@@ -17,23 +17,15 @@
  * along with BERT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Terminal as XTerm, ITerminalOptions, ITheme as ITerminalTheme } from 'xterm';
+import { Terminal as XTerm, ITerminalOptions, ITheme as ITerminalTheme } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Base64 } from 'js-base64';
 
-//import * as fit from 'xterm/lib/addons/fit/fit';
-import * as fit from './custom-fit';
-XTerm.applyAddon(fit);
-
-import * as weblinks from 'xterm/lib/addons/webLinks/webLinks';
-XTerm.applyAddon(weblinks);
-
-import { wcwidth } from 'xterm/lib/CharWidth';
-
-import * as CursorClientPosition from './cursor_client_position_addon';
-XTerm.applyAddon(CursorClientPosition);
-
-import {AnnotationManager, AnnotationType} from './annotation_addon';
-XTerm.applyAddon(AnnotationManager);
+import { fit } from './custom-fit';
+import { wcwidth } from './wcwidth';
+import { GetCursorClientRect, GetCellDimensions } from './xterm_internals';
+import { AnnotationManager, AnnotationType } from './annotation_addon';
 
 import { TextFormatter } from './text_formatter';
 import { shell, clipboard } from 'electron';
@@ -60,12 +52,11 @@ const SymbolTable = require('../../data/symbol_table.json');
 const BaseTheme:ITerminalTheme = {
   background: "#fff", 
   foreground: "#000",
-  selection: "rgba(255, 255, 0, .1)",
+  selectionBackground: "rgba(255, 255, 0, .1)",
   cursor: "#000"
 };
 
 const BaseOptions:ITerminalOptions = {
-  cols: 80, 
   cursorBlink: true,
   theme: BaseTheme,
   fontFamily: 'consolas',
@@ -258,6 +249,15 @@ export class TerminalImplementation {
 
   private viewport_rect:DOMRect;
 
+  /** xterm's fit addon, which proposes a geometry for the container */
+  private fit_addon_:FitAddon;
+
+  /** html nodes (graphics) positioned over buffer lines */
+  private annotations_:AnnotationManager;
+
+  /** the element that scrolls horizontally when output is wider than the view */
+  private scroll_node_:HTMLElement;
+
   /** options is constructed from base, then preferences are overlaid */
   private options_:ITerminalOptions; 
 
@@ -305,7 +305,12 @@ export class TerminalImplementation {
       }
       else 
       */
-      this.xterm_.setOption(key, this.options_[key]);
+      try {
+        this.xterm_.options[key] = this.options_[key];
+      }
+      catch(e) {
+        console.warn("terminal option not applied:", key, e.message || e);
+      }
     });
 
     this.UpdateContainerBackground();
@@ -319,7 +324,7 @@ export class TerminalImplementation {
    * @param offset_x 
    */
   CursorClientPosition(offset_x = 0){
-    return (this.xterm_ as any).GetCursorPosition(offset_x);
+    return GetCursorClientRect(this.xterm_, offset_x);
   }
 
   /** focus */
@@ -452,22 +457,21 @@ export class TerminalImplementation {
   EnsureCursorVisible(){
 
     // FIXME: cache [no]
-    let viewport = (this.xterm_ as any).viewport;
-    let dimensions = (this.xterm_ as any).renderer.dimensions;
-    let screenElement = (this.xterm_ as any).screenElement;
-    let viewportElement = (this.xterm_ as any).viewportElement;
+    const cell = GetCellDimensions(this.xterm_);
+    const viewportElement = this.scroll_node_;
+    const canvas_width = cell.width * this.xterm_.cols;
     
     let cursor = this.state_.line_info.cursor_position;
     let offset = cursor + this.state_.line_info.prompt.length;
 
     // FIXME: gate on scrollable, otherwise this is just noise
 
-    if(dimensions.canvasWidth <= this.viewport_rect.width) return;
+    if(canvas_width <= this.viewport_rect.width) return;
 
     // if cursor is at zero, always jump back to the start.
     // actually do that if it's within 1/2 screen width...
 
-    let cursor_position = offset * dimensions.scaledCellWidth;
+    let cursor_position = offset * cell.width;
         
     if( cursor_position <= this.viewport_rect.width/2){
       viewportElement.scrollLeft = 0;
@@ -635,17 +639,17 @@ export class TerminalImplementation {
    */
   InsertGraphic(height:number, node:HTMLElement){
 
-    let buffer = (this.xterm_ as any).buffer;
+    const buffer = this.xterm_.buffer.active;
     // console.info(buffer);
 
     // TAG: switching scaled -> actual to fix highdpi
 
-    let row_height = (this.xterm_ as any).renderer.dimensions.actualCellHeight;
+    const row_height = GetCellDimensions(this.xterm_).height;
     let rows = Math.ceil( height / row_height ) + 2;
-    let row = buffer.y + buffer.ybase + 1;
+    let row = buffer.cursorY + buffer.baseY + 1;
 
     this.InsertLines(rows);
-    (this.xterm_ as any).annotation_manager.AddAnnotation({
+    this.annotations_.AddAnnotation({
       element: node, line: row
     });
 
@@ -699,7 +703,9 @@ export class TerminalImplementation {
 
   ClearShell() {
     this.xterm_.clear();
-    (this.xterm_ as any).fit();
+    this.annotations_.RemoveAnnotations();
+    this.annotations_.SetTopOffset(); // reset to the default
+    fit(this.xterm_, this.fit_addon_);
   }
 
   /** 
@@ -963,8 +969,8 @@ export class TerminalImplementation {
 
   Resize(){
     
-    (this.xterm_ as any).fit();
-    this.viewport_rect = (this.xterm_ as any).viewportElement.getBoundingClientRect();
+    fit(this.xterm_, this.fit_addon_);
+    this.viewport_rect = this.scroll_node_.getBoundingClientRect();
 
     // FIXME: pass through to languages to adjust terminal size
 
@@ -1121,8 +1127,22 @@ export class TerminalImplementation {
 
     this.xterm_ = new XTerm(copy);
 
-    // so this is for layout. unfortunate.
+    this.fit_addon_ = new FitAddon();
+    this.xterm_.loadAddon(this.fit_addon_);
+
+    // so this is for layout. unfortunate. this node fills the container
+    // and scrolls horizontally when the terminal is wider than it (see
+    // custom-fit, which keeps columns at least as wide as the output).
+
     let inner_node = document.createElement("div");
+    inner_node.style.position = "absolute";
+    inner_node.style.top = "0";
+    inner_node.style.right = "0";
+    inner_node.style.bottom = "0";
+    inner_node.style.left = "0";
+    inner_node.style.overflowX = "auto";
+    inner_node.style.overflowY = "hidden";
+    this.scroll_node_ = inner_node;
     this.node_.appendChild(inner_node);
     this.xterm_.open(inner_node); 
     this.xterm_.focus();
@@ -1132,7 +1152,7 @@ export class TerminalImplementation {
     // FIXME: STATE -- have to figure out how to move annotations to state
 
     // ensure
-    (this.xterm_ as any).annotation_manager.Init();
+    this.annotations_ = new AnnotationManager(this.xterm_);
 
     this.Resize();
     // (this.xterm_ as any).fit();
@@ -1162,18 +1182,17 @@ export class TerminalImplementation {
       this.Resize(); // checks active [it does?]
     });
 
-    (this.xterm_ as any).webLinksInit((event: MouseEvent, uri: string) => {
+    this.xterm_.loadAddon(new WebLinksAddon((event: MouseEvent, uri: string) => {
       shell.openExternal(uri);
-      return true;
-    });
+    }));
 
-    this.xterm_.on("key", (key, event) => this.KeyDown(key, event));
+    this.xterm_.onKey(({ key, domEvent }) => this.KeyDown(key, domEvent));
 
     // FIXME: I don't think we ever use (or display) title, but it 
     // seems like something that should be part of state. not sure how it 
     // works.
 
-    this.xterm_.on("title", title => {
+    this.xterm_.onTitleChange(title => {
       console.warn( "title change:", title ); // ??
     });
 

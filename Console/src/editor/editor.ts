@@ -303,15 +303,15 @@ export class Editor {
 
     tabs.addEventListener("contextmenu", event => this.TabContextMenu(event));
 
-    this.tabs_.events.filter(event => event.type === TabEventType.deactivate).subscribe(event => {
+    this.tabs_.events.pipe(Rx.filter(event => event.type === TabEventType.deactivate)).subscribe(event => {
       this.DeactivateTab(event.tab);
     });
 
-    this.tabs_.events.filter(event => event.type === TabEventType.activate).subscribe(event => {
+    this.tabs_.events.pipe(Rx.filter(event => event.type === TabEventType.activate)).subscribe(event => {
       this.ActivateTab(event.tab);
     });
 
-    this.tabs_.events.filter(x => x.type === TabEventType.buttonClick).subscribe(event => {
+    this.tabs_.events.pipe(Rx.filter(x => x.type === TabEventType.buttonClick)).subscribe(event => {
       this.CloseTab(event.tab);
     });
 
@@ -359,7 +359,7 @@ export class Editor {
       }
     });
 
-    MenuUtilities.loaded.filter(x => x).first().subscribe(() => this.UpdateRecentFilesList());
+    MenuUtilities.loaded.pipe(Rx.filter(x => x), Rx.first()).subscribe(() => this.UpdateRecentFilesList());
 
   }
 
@@ -504,7 +504,7 @@ export class Editor {
    */
   private EnsureConfig() : Promise<any> {
     return new Promise<void>(resolve => {
-      ConfigManager.filter(x => x.config).first().subscribe(config => {
+      ConfigManager.pipe(Rx.filter(x => x.config), Rx.first()).subscribe(config => {
         this.editor_options_ = config['editor'] || {};
         resolve();
       });
