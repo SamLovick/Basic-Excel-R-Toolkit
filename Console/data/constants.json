@@ -46,7 +46,8 @@
     "selectPackages": {
       "selectPackagesTitle": "Select Packages",
       "selectPackages": "Select Packages:",
-      "pleaseWait": "Loading package list, please wait...",
+        "pleaseWait": "Loading package list, please wait...",
+      "loadFailed": "Could not load the package list. Check your connection, or choose a different mirror.",
       "pleaseWaitInstalled": "Checking installed packages, please wait...",
       "installed": "installed",
       "filter": "Filter",
