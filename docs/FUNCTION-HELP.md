@@ -88,16 +88,20 @@ To try it:
 1. Download `ExcelDna.IntelliSense64.xll` from the
    [releases page](https://github.com/Excel-DNA/IntelliSense/releases) and
    load it in Excel, through File > Options > Add-ins > Manage Excel
-   Add-ins > Browse.
+   Add-ins > Browse. Loading it there keeps it loaded next time.
 2. Load `%LOCALAPPDATA%\BERT2\BERT-IntelliSense.xlam` the same way.
 3. Type `=R.` and one of your function names in a cell. The tooltip appears
-   as you type past the open bracket, and moves through your argument
-   descriptions as you type commas.
+   as you type past the open bracket, showing the signature with the
+   current argument in bold, the function description, and the description
+   of the argument you are on. It follows the argument as you type commas.
 
-This is a prototype. It has not been tested against every version of Excel,
-and it adds a second add-in to your setup, which is a real cost. If you do
-not want the tooltip, skip it: the dialogs described above work with no
-extra add-ins.
+Checked with IntelliSense 1.9.0 and 64-bit Excel from Microsoft 365 on
+Windows 11, against functions described as above.
+
+Two things to weigh. The IntelliSense add-in is not code-signed, so Excel
+and SmartScreen may warn about it, and it is a second add-in in your setup
+that BERT does not control. If you would rather not, skip it: the dialogs
+described above need nothing extra.
 
 ## How it travels
 
