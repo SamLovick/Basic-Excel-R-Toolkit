@@ -33,6 +33,15 @@ bar). Close Excel, then:
 Your `bert-config.json`, `user-stylesheet.less` and the files in
 `Documents\BERT2` are untouched.
 
+## Function help in the formula bar (optional)
+
+The installer offers this as a tick box; from the zip it is manual. Copy
+`ExcelDna.IntelliSense64.xll`, `ExcelDna.IntelliSense-License.txt` and
+`BERT-IntelliSense.xlam` into the BERT directory as well, then load the two
+add-ins through File > Options > Add-ins > Manage Excel Add-ins > Browse.
+See `docs/FUNCTION-HELP.md` for what they do. Skip them if you do not want
+the feature; nothing else depends on them.
+
 ## A fresh installation
 
 1. Create `%LOCALAPPDATA%\BERT2` and copy everything from the zip into it.

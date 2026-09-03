@@ -46,3 +46,7 @@ Install/build-log.txt
 # R CMD INSTALL byproducts in the module source
 Module/src/*.dll
 Module/src/*.o
+
+# the third-party add-in the optional help feature ships; build-release.ps1
+# downloads and verifies it
+Install/ExcelDna.IntelliSense64.xll

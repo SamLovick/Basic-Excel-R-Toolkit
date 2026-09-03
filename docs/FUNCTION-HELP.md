@@ -83,25 +83,41 @@ workbook or workbook add-in, and it deliberately ignores XLL add-ins like
 BERT. `BERT-IntelliSense.xlam` bridges that gap: it is an empty add-in whose
 only job is to be the file the XML sits beside.
 
-To try it:
+The installer offers this as "Function help in the formula bar", a tick box
+on its components page, off by default. Selecting it installs both add-ins
+and switches them on in Excel. Running the installer again with the box
+cleared removes them, and uninstalling BERT removes them too. For scripted
+installs, `/HELP-FEATURE` and `/NO-HELP-FEATURE` set it from the command
+line.
 
-1. Download `ExcelDna.IntelliSense64.xll` from the
-   [releases page](https://github.com/Excel-DNA/IntelliSense/releases) and
-   load it in Excel, through File > Options > Add-ins > Manage Excel
-   Add-ins > Browse. Loading it there keeps it loaded next time.
-2. Load `%LOCALAPPDATA%\BERT2\BERT-IntelliSense.xlam` the same way.
-3. Type `=R.` and one of your function names in a cell. The tooltip appears
-   as you type past the open bracket, showing the signature with the
-   current argument in bold, the function description, and the description
-   of the argument you are on. It follows the argument as you type commas.
+Then type `=R.` and one of your function names in a cell. The tooltip
+appears as you type past the open bracket, showing the signature with the
+current argument in bold, the function description, and the description of
+the argument you are on. It follows the argument as you type commas.
+
+To add or remove it by hand instead, the two add-ins live in
+`%LOCALAPPDATA%\BERT2` and are loaded through File > Options > Add-ins >
+Manage Excel Add-ins > Browse.
+
+The help add-in looks for the descriptions as Excel starts, and ignores the
+file if it is not there yet. On a brand-new installation BERT has not
+written one, so the installer lays down a starter file describing the two
+example functions; BERT replaces it with your own the first time it
+registers them.
+
+If a tooltip does not appear, check first that the function is registered at
+all: start typing its name in a cell and see whether Excel offers it in the
+autocomplete list. A function that has been renamed, or whose file has left
+your functions directory, has nothing to describe.
 
 Checked with IntelliSense 1.9.0 and 64-bit Excel from Microsoft 365 on
 Windows 11, against functions described as above.
 
-Two things to weigh. The IntelliSense add-in is not code-signed, so Excel
-and SmartScreen may warn about it, and it is a second add-in in your setup
-that BERT does not control. If you would rather not, skip it: the dialogs
-described above need nothing extra.
+Two things to weigh, which is why it is off by default. The IntelliSense
+add-in is not code-signed, so Excel and SmartScreen may warn about it, and
+it is a second add-in in your setup that BERT does not control. If you
+would rather not, leave the box clear: the dialogs described above need
+nothing extra.
 
 ## How it travels
 

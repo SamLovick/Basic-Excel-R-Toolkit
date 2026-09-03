@@ -88,8 +88,13 @@ if (-not $SkipConsole) {
 $files = "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe",
          "bert-config-template.json", "user-stylesheet-template.less", "Welcome.md", "bert2.ico"
 
-# shipped from this directory rather than from Build
-$installer_files = "BERT-IntelliSense.xlam"
+# shipped from this directory rather than from Build. the IntelliSense add-in
+# is a third-party binary, pinned by version and checked against its hash
+# rather than committed to the repository.
+$installer_files = "BERT-IntelliSense.xlam", "ExcelDna.IntelliSense64.xll", "ExcelDna.IntelliSense-License.txt",
+                   "BERT-IntelliSense.intellisense.xml"
+$intellisense_version = "v1.9.0"
+$intellisense_sha256 = "311E8A0520330EC0C5868EFA2D97E37DF3401AEDED3481014336DD8308A79A8A"
 
 # the binaries must not need the Visual C++ redistributable: everything is
 # linked against the static runtime, protobuf included (x64-windows-static)
@@ -103,6 +108,19 @@ foreach ($f in "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe") {
 $dirs = "Console", "module", "startup"
 foreach ($f in $files) { if (-not (Test-Path (Join-Path $build $f))) { Fail "missing $f in Build" } }
 foreach ($d in $dirs) { if (-not (Test-Path (Join-Path $build $d))) { Fail "missing $d\ in Build" } }
+
+# ---- the optional function help add-in -------------------------------------
+$isxll = Join-Path $here "ExcelDna.IntelliSense64.xll"
+if (-not (Test-Path $isxll)) {
+  Step "downloading Excel-DNA IntelliSense $intellisense_version"
+  $url = "https://github.com/Excel-DNA/IntelliSense/releases/download/$intellisense_version/ExcelDna.IntelliSense64.xll"
+  Invoke-WebRequest -Uri $url -OutFile $isxll
+}
+$hash = (Get-FileHash $isxll -Algorithm SHA256).Hash
+if ($hash -ne $intellisense_sha256) {
+  Fail "ExcelDna.IntelliSense64.xll does not match the pinned hash`n  expected $intellisense_sha256`n  found    $hash"
+}
+Write-Host "IntelliSense add-in $intellisense_version verified"
 
 # ---- installer -------------------------------------------------------------
 if (-not $SkipInstaller) {

@@ -31,6 +31,12 @@
 ; after the bundled R-3.5.0 that older installers left behind (the add-in
 ; uses the last candidate that exists). BERT.R.home in bert-config.json
 ; overrides both.
+;
+; Function help in the formula bar is an optional component, off by default.
+; Selecting it installs the Excel-DNA IntelliSense add-in and a small carrier
+; add-in, and registers both with Excel; clearing it on a later run removes
+; them again. See docs/FUNCTION-HELP.md. For scripted installs, /HELP-FEATURE
+; and /NO-HELP-FEATURE set it from the command line.
 
 !ifndef VERSION
   !error "version is not defined"
@@ -38,14 +44,26 @@
 
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
+!include "LogicLib.nsh"
+!include "Sections.nsh"
 !include "StrFunc.nsh"
+!include "WordFunc.nsh"
 ${StrRep}
+!insertmacro VersionCompare
+!insertmacro GetParameters
+!insertmacro GetOptions
 
 Unicode true
 
 Var ExcelFlavor
 Var ExcelPath
 Var RHome
+Var RVersion
+Var ExcelKey
+
+; the values written into Excel's add-in list for the optional component
+!define IS_XLL_VALUE '/R "$INSTDIR\ExcelDna.IntelliSense64.xll"'
+!define IS_XLAM_VALUE '"$INSTDIR\BERT-IntelliSense.xlam"'
 
 Icon "bert2.ico"
 UninstallIcon "bert2.ico"
@@ -65,6 +83,7 @@ RequestExecutionLevel user
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "license.txt"
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -73,6 +92,142 @@ RequestExecutionLevel user
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
 !insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
+; Excel keeps its add-in list in the registry as OPEN, OPEN1, OPEN2 and so
+; on, with no gaps: the first missing name ends the list. These add to and
+; remove from that list without disturbing add-ins the user already has.
+; Defined twice, once for the installer and once for the uninstaller.
+
+!macro EXCEL_ADDIN_FUNCTIONS UN
+
+; the Excel Options key for the installed Excel, or empty. 16.0 covers 2016
+; and everything since, including Microsoft 365.
+Function ${UN}FindExcelOptionsKey
+  Push $0
+  Push $1
+  Push $2
+  StrCpy $ExcelKey ""
+  StrCpy $2 0
+excelkey_loop:
+  ${If} $2 == 0
+    StrCpy $0 "16.0"
+  ${ElseIf} $2 == 1
+    StrCpy $0 "15.0"
+  ${ElseIf} $2 == 2
+    StrCpy $0 "14.0"
+  ${Else}
+    Goto excelkey_done
+  ${EndIf}
+  ClearErrors
+  EnumRegKey $1 HKCU "Software\Microsoft\Office\$0\Excel" 0
+  ${If} $1 != ""
+    StrCpy $ExcelKey "Software\Microsoft\Office\$0\Excel\Options"
+    Goto excelkey_done
+  ${EndIf}
+  IntOp $2 $2 + 1
+  Goto excelkey_loop
+excelkey_done:
+  Pop $2
+  Pop $1
+  Pop $0
+FunctionEnd
+
+; adds the value on the stack to the add-in list, if it is not already there
+Function ${UN}RegisterExcelAddIn
+  Exch $R0
+  Push $R1
+  Push $R2
+  Push $R3
+  StrCmp $ExcelKey "" reg_done
+  StrCpy $R1 0
+reg_loop:
+  ${If} $R1 == 0
+    StrCpy $R2 "OPEN"
+  ${Else}
+    StrCpy $R2 "OPEN$R1"
+  ${EndIf}
+  ClearErrors
+  ReadRegStr $R3 HKCU $ExcelKey $R2
+  ${If} ${Errors}
+    WriteRegStr HKCU $ExcelKey $R2 $R0    ; first free slot ends the list
+    Goto reg_done
+  ${EndIf}
+  StrCmp $R3 $R0 reg_done                 ; already registered
+  IntOp $R1 $R1 + 1
+  ${If} $R1 < 40
+    Goto reg_loop
+  ${EndIf}
+reg_done:
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Pop $R0
+FunctionEnd
+
+; removes the value on the stack from the add-in list, keeping it contiguous
+; by moving the last entry into the gap
+Function ${UN}UnregisterExcelAddIn
+  Exch $R0
+  Push $R1
+  Push $R2
+  Push $R3
+  Push $R4
+  Push $R5
+  StrCmp $ExcelKey "" unreg_done
+  StrCpy $R4 -1
+  StrCpy $R5 -1
+  StrCpy $R1 0
+unreg_loop:
+  ${If} $R1 == 0
+    StrCpy $R2 "OPEN"
+  ${Else}
+    StrCpy $R2 "OPEN$R1"
+  ${EndIf}
+  ClearErrors
+  ReadRegStr $R3 HKCU $ExcelKey $R2
+  ${If} ${Errors}
+    Goto unreg_scanned
+  ${EndIf}
+  StrCpy $R5 $R1
+  StrCmp $R3 $R0 0 +2
+  StrCpy $R4 $R1
+  IntOp $R1 $R1 + 1
+  ${If} $R1 < 40
+    Goto unreg_loop
+  ${EndIf}
+unreg_scanned:
+  ${If} $R4 < 0
+    Goto unreg_done
+  ${EndIf}
+  ${If} $R4 == 0
+    StrCpy $R2 "OPEN"
+  ${Else}
+    StrCpy $R2 "OPEN$R4"
+  ${EndIf}
+  ${If} $R5 == 0
+    StrCpy $R3 "OPEN"
+  ${Else}
+    StrCpy $R3 "OPEN$R5"
+  ${EndIf}
+  ${If} $R4 != $R5
+    ReadRegStr $R1 HKCU $ExcelKey $R3
+    WriteRegStr HKCU $ExcelKey $R2 $R1
+  ${EndIf}
+  DeleteRegValue HKCU $ExcelKey $R3
+unreg_done:
+  Pop $R5
+  Pop $R4
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Pop $R0
+FunctionEnd
+
+!macroend
+
+!insertmacro EXCEL_ADDIN_FUNCTIONS ""
+!insertmacro EXCEL_ADDIN_FUNCTIONS "un."
 
 ;--------------------------------
 ; which Excel is installed (Win64 or Win32), and where
@@ -99,7 +254,7 @@ Function CheckOldBERT
   ReadRegDWORD $0 HKCU "Software\Microsoft\Office\Excel\Addins\BERTRibbon.Connect" "LoadBehavior"
   IntCmp $0 3 +2
   Goto CheckOldBERT_Check64
-  MessageBox MB_OKCANCEL|MB_ICONQUESTION "Installer found an old BERT (v1) installation.$\nOkay to disable it?" IDCANCEL CheckOldBERT_Cancel
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION "Installer found an old BERT (v1) installation.$\nOkay to disable it?" /SD IDOK IDCANCEL CheckOldBERT_Cancel
   WriteRegDWORD HKCU "Software\Microsoft\Office\Excel\Addins\BERTRibbon.Connect" "LoadBehavior" 2
   StrCpy $1 "Disable"
 CheckOldBERT_Check64:
@@ -109,7 +264,7 @@ CheckOldBERT_Check64:
   ReadRegDWORD $0 HKCU "Software\Microsoft\Office\Excel\Addins\BERTRibbon.Connect" "LoadBehavior"
   IntCmp $0 3 +2
   Goto CheckOldBERT_End
-  MessageBox MB_OKCANCEL|MB_ICONQUESTION "Installer found an old BERT (v1) installation.$\nOkay to disable it?" IDCANCEL CheckOldBERT_Cancel
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION "Installer found an old BERT (v1) installation.$\nOkay to disable it?" /SD IDOK IDCANCEL CheckOldBERT_Cancel
   WriteRegDWORD HKCU "Software\Microsoft\Office\Excel\Addins\BERTRibbon.Connect" "LoadBehavior" 2
   StrCpy $1 "Disable"
   Goto CheckOldBERT_End
@@ -118,32 +273,127 @@ CheckOldBERT_Cancel:
 CheckOldBERT_End:
   SetRegView default
   StrCmp $1 "" CheckOldBERT_Exit
-  MessageBox MB_OK|MB_ICONINFORMATION "Your old BERT installation was disabled, but not deleted. Please see the BERT website for more information on upgrading from BERT v1."
+  MessageBox MB_OK|MB_ICONINFORMATION "Your old BERT installation was disabled, but not deleted. Please see the BERT website for more information on upgrading from BERT v1." /SD IDOK
 CheckOldBERT_Exit:
 FunctionEnd
 
 ;--------------------------------
-; the current 64-bit R, as registered by the R installer (per user or per
-; machine, under R64 for 64-bit builds, older installers under R)
+; find an R to use. people install R in more ways than one, so look in
+; three places, keeping the newest usable one:
+;
+;   1. the InstallPath each R installer records, per user or per machine,
+;      under R64 for 64-bit builds and R for older ones
+;   2. the per-version subkeys below those, which survive when the
+;      top-level value is missing or points at an R that has been removed
+;   3. the usual install directory, for an R that registered nothing
+;
+; a candidate counts only if it actually has a 64-bit R.dll. $RVersion ends
+; up holding the version where we could tell, otherwise empty.
+
+; considers one candidate: $0 = home, $1 = version (may be empty)
+Function ConsiderR
+  Push $2
+  ${If} $0 != ""
+  ${AndIf} ${FileExists} "$0\bin\x64\R.dll"
+    ${If} $RHome == ""
+      StrCpy $RHome $0
+      StrCpy $RVersion $1
+    ${ElseIf} $1 != ""
+    ${AndIf} $RVersion != ""
+      ${VersionCompare} $1 $RVersion $2
+      ${If} $2 == 1                      ; the candidate is newer
+        StrCpy $RHome $0
+        StrCpy $RVersion $1
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+  Pop $2
+FunctionEnd
+
+; every per-version subkey of one R-core key: $3 = root marker, $4 = subkey
+Function ConsiderRSubkeys
+  Push $5
+  Push $6
+  StrCpy $5 0
+subkey_loop:
+  ClearErrors
+  ${If} $3 == "HKLM"
+    EnumRegKey $6 HKLM "Software\R-core\$4" $5
+  ${Else}
+    EnumRegKey $6 HKCU "Software\R-core\$4" $5
+  ${EndIf}
+  ${If} ${Errors}
+    Goto subkey_done
+  ${EndIf}
+  StrCmp $6 "" subkey_done
+  ${If} $3 == "HKLM"
+    ReadRegStr $0 HKLM "Software\R-core\$4\$6" "InstallPath"
+  ${Else}
+    ReadRegStr $0 HKCU "Software\R-core\$4\$6" "InstallPath"
+  ${EndIf}
+  StrCpy $1 $6                            ; the subkey name is the version
+  Call ConsiderR
+  IntOp $5 $5 + 1
+  ${If} $5 < 40
+    Goto subkey_loop
+  ${EndIf}
+subkey_done:
+  Pop $6
+  Pop $5
+FunctionEnd
+
+!macro CONSIDER_R_KEY ROOT SUB
+  ReadRegStr $0 ${ROOT} "Software\R-core\${SUB}" "InstallPath"
+  ReadRegStr $1 ${ROOT} "Software\R-core\${SUB}" "Current Version"
+  Call ConsiderR
+  StrCpy $3 "${ROOT}"
+  StrCpy $4 "${SUB}"
+  Call ConsiderRSubkeys
+!macroend
 
 Function DetectR
+
   StrCpy $RHome ""
+  StrCpy $RVersion ""
   SetRegView 64
-  ReadRegStr $RHome HKCU "Software\R-core\R64" "InstallPath"
-  StrCmp $RHome "" 0 DetectR_check
-  ReadRegStr $RHome HKLM "Software\R-core\R64" "InstallPath"
-  StrCmp $RHome "" 0 DetectR_check
-  ReadRegStr $RHome HKCU "Software\R-core\R" "InstallPath"
-  StrCmp $RHome "" 0 DetectR_check
-  ReadRegStr $RHome HKLM "Software\R-core\R" "InstallPath"
-DetectR_check:
+
+  !insertmacro CONSIDER_R_KEY HKCU "R64"
+  !insertmacro CONSIDER_R_KEY HKLM "R64"
+  !insertmacro CONSIDER_R_KEY HKCU "R"
+  !insertmacro CONSIDER_R_KEY HKLM "R"
+
   SetRegView default
-  StrCmp $RHome "" DetectR_none
-  IfFileExists "$RHome\bin\x64\R.dll" DetectR_ok
-DetectR_none:
-  StrCpy $RHome ""
-  MessageBox MB_OK|MB_ICONINFORMATION "No 64-bit R installation was found. BERT needs R 4.2 or later (https://cran.r-project.org).$\n$\nAfter installing R, either run this installer again or set BERT.R.home in bert-config.json."
-DetectR_ok:
+
+  ; an R that registered nothing, in the usual place. the directory is
+  ; named for the version, so R-4.5.2 gives 4.5.2.
+
+  ${If} $RHome == ""
+    FindFirst $5 $6 "$PROGRAMFILES64\R\R-*"
+rdir_loop:
+    StrCmp $6 "" rdir_done
+    StrCpy $0 "$PROGRAMFILES64\R\$6"
+    StrCpy $1 $6 "" 2                     ; drop the "R-"
+    Call ConsiderR
+    FindNext $5 $6
+    Goto rdir_loop
+rdir_done:
+    FindClose $5
+  ${EndIf}
+
+  ${If} $RHome == ""
+    MessageBox MB_OK|MB_ICONINFORMATION "No 64-bit R installation was found. BERT needs R 4.2 or later (https://cran.r-project.org).$\n$\nBERT will still install. Once R is installed, either run this installer again or set BERT.R.home in bert-config.json." /SD IDOK
+    Return
+  ${EndIf}
+
+  ; found one: only say something if it is older than BERT is built for
+
+  StrCmp $RVersion "" detectr_done
+  ${VersionCompare} $RVersion "4.2.0" $0
+  ${If} $0 == 2
+    MessageBox MB_OK|MB_ICONINFORMATION "The R found on this machine is $RVersion, in $RHome.$\n$\nBERT is built for R 4.2 or later: with an older R the BERT R package may not load, and text outside the Windows code page may not survive the round trip. BERT will still install and use this R.$\n$\nTo use a different R, set BERT.R.home in bert-config.json." /SD IDOK
+  ${EndIf}
+detectr_done:
+
 FunctionEnd
 
 ;--------------------------------
@@ -169,18 +419,20 @@ FunctionEnd
 
 ;--------------------------------
 
-Section "Main" SecMain
+Section "BERT" SecMain
+
+  SectionIn RO
 
 CheckExcelRunning:
   FindWindow $0 "XLMAIN"
   StrCmp $0 0 +4
-  MessageBox MB_OKCANCEL|MB_ICONINFORMATION "Please close Excel before running the installer." IDCANCEL +2
+  MessageBox MB_OKCANCEL|MB_ICONINFORMATION "Please close Excel before running the installer." /SD IDCANCEL IDCANCEL +2
   Goto CheckExcelRunning
   Abort "Install canceled"
 
   Call CheckExcelVersion
   StrCmp $ExcelFlavor "Win64" +3
-  MessageBox MB_OK|MB_ICONSTOP "This installer is for 64-bit Excel, which was not found (found: '$ExcelFlavor')."
+  MessageBox MB_OK|MB_ICONSTOP "This installer is for 64-bit Excel, which was not found (found: '$ExcelFlavor')." /SD IDOK
   Abort "Install canceled: 64-bit Excel not found"
 
   Call CheckOldBERT
@@ -246,11 +498,6 @@ CheckExcelRunning:
   File ..\Build\Welcome.md
   File "bert2.ico"
 
-  ; an empty add-in that lets the Excel-DNA IntelliSense add-in find the
-  ; function descriptions BERT writes; loading it is optional, and nothing
-  ; else depends on it. see docs/FUNCTION-HELP.md
-
-  File "BERT-IntelliSense.xlam"
 
   ; bundled R from installers before 2.4 (2.4 bundled R-3.5.0, which stays
   ; as a fallback for anyone who has not installed R themselves)
@@ -272,6 +519,89 @@ CheckExcelRunning:
 SectionEnd
 
 ;--------------------------------
+; optional: the argument tooltip in the formula bar. excel draws that only
+; for its own functions, so this installs the Excel-DNA IntelliSense add-in,
+; which draws one for user-defined functions, plus an empty carrier add-in
+; it can find BERT's function descriptions beside. see docs/FUNCTION-HELP.md
+
+Section /o "Function help in the formula bar" SecIntelliSense
+
+  SetOutPath "$INSTDIR"
+
+  File "BERT-IntelliSense.xlam"
+  File "ExcelDna.IntelliSense64.xll"
+  File "ExcelDna.IntelliSense-License.txt"
+
+  ; the help add-in reads the descriptions as Excel starts and will not pick
+  ; the file up later in that session, so there has to be one before BERT
+  ; has run once. BERT overwrites it whenever it registers functions, so
+  ; only lay it down when it is not already here.
+
+  IfFileExists "$INSTDIR\BERT-IntelliSense.intellisense.xml" +2
+  File "BERT-IntelliSense.intellisense.xml"
+
+  Call FindExcelOptionsKey
+  ${If} $ExcelKey == ""
+    MessageBox MB_OK|MB_ICONINFORMATION "The function help add-ins were installed, but Excel's add-in list could not be found, so they were not enabled. Load them from File > Options > Add-ins > Manage Excel Add-ins > Browse:$\n$\n$INSTDIR\BERT-IntelliSense.xlam$\n$INSTDIR\ExcelDna.IntelliSense64.xll" /SD IDOK
+  ${Else}
+    Push '${IS_XLAM_VALUE}'
+    Call RegisterExcelAddIn
+    Push '${IS_XLL_VALUE}'
+    Call RegisterExcelAddIn
+  ${EndIf}
+
+SectionEnd
+
+;--------------------------------
+; runs after the sections above: takes the optional component back out if it
+; was cleared on a re-install
+
+Section "-post"
+
+  ${IfNot} ${SectionIsSelected} ${SecIntelliSense}
+    Call FindExcelOptionsKey
+    Push '${IS_XLAM_VALUE}'
+    Call UnregisterExcelAddIn
+    Push '${IS_XLL_VALUE}'
+    Call UnregisterExcelAddIn
+    Delete "$INSTDIR\BERT-IntelliSense.xlam"
+    Delete "$INSTDIR\ExcelDna.IntelliSense64.xll"
+    Delete "$INSTDIR\ExcelDna.IntelliSense-License.txt"
+    Delete "$INSTDIR\BERT-IntelliSense.intellisense.xml"
+  ${EndIf}
+
+SectionEnd
+
+;--------------------------------
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "The BERT add-in, the R language controller and the console."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecIntelliSense} "Shows a description of your R functions and their arguments as you type a formula, using the Excel-DNA IntelliSense add-in (MIT licensed, installed and enabled in Excel alongside BERT). Clear this box on a later run to remove it."
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+;--------------------------------
+; the optional component can be set from the command line, for scripted
+; installs: /HELP-FEATURE or /NO-HELP-FEATURE
+
+Function .onInit
+  Push $R0
+  Push $R1
+  ${GetParameters} $R0
+  ClearErrors
+  ${GetOptions} $R0 "/HELP-FEATURE" $R1
+  ${IfNot} ${Errors}
+    !insertmacro SelectSection ${SecIntelliSense}
+  ${EndIf}
+  ClearErrors
+  ${GetOptions} $R0 "/NO-HELP-FEATURE" $R1
+  ${IfNot} ${Errors}
+    !insertmacro UnselectSection ${SecIntelliSense}
+  ${EndIf}
+  Pop $R1
+  Pop $R0
+FunctionEnd
+
+;--------------------------------
 ; uninstall leaves the user's settings (bert-config.json, user-stylesheet.less)
 ; and Documents\BERT2 in place
 
@@ -280,7 +610,7 @@ Section "Uninstall"
 UninstallCheckExcelRunning:
   FindWindow $0 "XLMAIN"
   StrCmp $0 0 +4
-  MessageBox MB_OKCANCEL|MB_ICONINFORMATION "Please close Excel before running the uninstaller." IDCANCEL +2
+  MessageBox MB_OKCANCEL|MB_ICONINFORMATION "Please close Excel before running the uninstaller." /SD IDCANCEL IDCANCEL +2
   Goto UninstallCheckExcelRunning
   Abort "Uninstall canceled"
 
@@ -297,6 +627,13 @@ UninstallCheckExcelRunning:
 
   ExecWait 'regsvr32 /s /u "$INSTDIR\BERTRibbon2x64.dll"'
 
+  ; take the optional function help add-ins out of Excel's add-in list
+  Call un.FindExcelOptionsKey
+  Push '${IS_XLAM_VALUE}'
+  Call un.UnregisterExcelAddIn
+  Push '${IS_XLL_VALUE}'
+  Call un.UnregisterExcelAddIn
+
   Delete "$INSTDIR\BERT64.xll"
   Delete "$INSTDIR\BERT32.xll"
   Delete "$INSTDIR\BERTRibbon2x64.dll"
@@ -312,6 +649,8 @@ UninstallCheckExcelRunning:
   Delete "$INSTDIR\bert-languages.template.json"
   Delete "$INSTDIR\BERT-IntelliSense.xlam"
   Delete "$INSTDIR\BERT-IntelliSense.intellisense.xml"
+  Delete "$INSTDIR\ExcelDna.IntelliSense64.xll"
+  Delete "$INSTDIR\ExcelDna.IntelliSense-License.txt"
   Delete "$INSTDIR\Welcome.md"
   Delete "$INSTDIR\bert2.ico"
   Delete "$INSTDIR\Uninstall.exe"

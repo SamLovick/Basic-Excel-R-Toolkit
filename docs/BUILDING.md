@@ -157,12 +157,26 @@ and `BERT-<version>-x64.zip`.
 The installer is 64-bit only, does not bundle R, and installs over an
 existing BERT 2 without touching `bert-config.json`, `user-stylesheet.less`
 or `Documents\BERT2`; the console, module and startup directories are
-replaced. It finds the current R in the registry (where the R installer
-records it) and writes it into `bert-languages.json` after the bundled
-`R-3.5.0` an older installer may have left, so an existing installation
-moves to the installed R without anyone editing a file, and `BERT.R.home`
-in `bert-config.json` still overrides it. The module is compiled with the R
-used for the build, so a release built with R 4.5 needs R 4.x to load it.
+replaced.
+
+It looks for an R in three places, keeping the newest it finds: the
+`InstallPath` an R installer records, per user and per machine, under both
+`R-core\R64` and `R-core\R`; the per-version subkeys below those, which
+survive when the top-level value is missing or points at an R that has been
+removed; and `Program Files\R`, for an R that registered nothing. The one it
+picks goes into `bert-languages.json` after the bundled `R-3.5.0` an older
+installer may have left, so an existing installation moves to the installed
+R without anyone editing a file, and `BERT.R.home` in `bert-config.json`
+still overrides it. It says something only when it finds no R at all, or one
+older than 4.2.
+
+Function help in the formula bar is an optional component, off by default;
+see `FUNCTION-HELP.md`. The build script downloads the third-party add-in
+that component needs and checks it against a pinned hash, so that binary is
+not in the repository.
+
+The module is compiled with the R used for the build, so a release built
+with R 4.5 needs R 4.x to load it.
 
 ## Running against your own R
 
