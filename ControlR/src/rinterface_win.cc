@@ -42,9 +42,20 @@ int R_ReadConsole(const char *prompt, char *buf, int len, int addtohistory) {
  */
 void R_WriteConsoleEx(const char *buf, int len, int flag) {
 
-  // I cannot figure out how to get R to output UTF8 when it has windows cp 
-  // strings. it just seems to ignore all the things I set. temporarily let's
-  // do this the hard way.
+  // from 4.2.0 R for Windows uses UTF-8 as its native encoding, so the
+  // buffer goes straight through. it is not validated first either: output
+  // that arrives in pieces could split a multi-byte character across two
+  // calls, and the fragment would fail validation and be mangled by the
+  // code-page conversion below.
+
+  if (r_console_utf8) {
+    return ConsoleMessage(buf, len, flag);
+  }
+
+  // earlier versions write in the Windows code page. I cannot figure out
+  // how to get R to output UTF8 when it has windows cp strings. it just
+  // seems to ignore all the things I set. temporarily let's do this the
+  // hard way.
 
   if (ValidUTF8(buf, len)) {
     return ConsoleMessage(buf, len, flag);

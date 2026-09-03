@@ -37,6 +37,9 @@ std::stack<int> active_pipe;
 
 std::string language_tag;
 
+// set from the R version at startup; see R_WriteConsoleEx
+bool r_console_utf8 = false;
+
 /** debug/util function */
 std::string GetLastErrorAsString(DWORD err = -1)
 {
@@ -561,6 +564,10 @@ int main(int argc, char** argv) {
       << " is newer than the " << BERT_R_TESTED_MAJOR
       << ".x series this build was tested with; continuing" << std::endl;
   }
+
+  // R for Windows has written console output in UTF-8 since 4.2.0. see
+  // R_WriteConsoleEx in rinterface_win.cc for what this controls.
+  r_console_utf8 = (major > 4 || (major == 4 && minor >= 2));
 
   std::stringstream ss;
   ss << "R::" << major << "." << minor << "." << patch;
