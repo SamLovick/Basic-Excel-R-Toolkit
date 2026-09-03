@@ -28,7 +28,8 @@ import MarkdownIt from 'markdown-it';
 import MarkdownItTasks from 'markdown-it-task-lists';
 const MD = new MarkdownIt().use(MarkdownItTasks); 
 
-import { clipboard, shell as electron_shell } from 'electron';
+import { shell as electron_shell } from 'electron';
+import { clipboard } from '../common/clipboard';
 import * as remote from '@electron/remote';
 const { Menu, MenuItem, dialog } = remote;
 

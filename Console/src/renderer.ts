@@ -18,7 +18,7 @@
  */
 
 import {Pipe, ConsoleMessage, ConsoleMessageType} from './io/pipe';
-import {clipboard, shell as electron_shell} from 'electron';
+import {shell as electron_shell} from 'electron';
 import * as remote from '@electron/remote';
 
 const {Menu, MenuItem} = remote;

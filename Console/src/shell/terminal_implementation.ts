@@ -28,7 +28,8 @@ import { GetCursorClientRect, GetCellDimensions } from './xterm_internals';
 import { AnnotationManager, AnnotationType } from './annotation_addon';
 
 import { TextFormatter } from './text_formatter';
-import { shell, clipboard } from 'electron';
+import { shell } from 'electron';
+import { clipboard } from '../common/clipboard';
 import { LanguageInterface } from './language_interface';
 import { Pipe, ConsoleMessage, ConsoleMessageType } from '../io/pipe';
 
@@ -758,8 +759,7 @@ export class TerminalImplementation {
 
     this.xterm_.scrollToBottom();
 
-    // electron's clipboard.readText is asynchronous now, like the
-    // navigator.clipboard API it follows
+    // the clipboard is asynchronous
     if (!text) text = ((await clipboard.readText()) || "");
 
     // FIXME: cursor pos [meaning what?]

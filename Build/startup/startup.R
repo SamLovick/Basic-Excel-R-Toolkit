@@ -294,7 +294,10 @@ library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
     version.string <- Sys.getenv('BERT_VERSION');
     version <- list();
     version['build.date'] <- Sys.getenv('BERT_BUILD_DATE');
-    parts <- as.numeric(unlist(strsplit(version.string, '\\.')));
+    # a development build carries a tag after the release number, e.g.
+    # "2.4.3-r4 (built ...)"; only the leading numeric part is the version
+    numeric.part <- regmatches(version.string, regexpr('^[0-9]+(\\.[0-9]+)*', version.string));
+    parts <- as.numeric(unlist(strsplit(numeric.part, '\\.')));
     version['major'] <- parts[1];
     version['minor'] <- parts[2];
     version['patch'] <- parts[3];
