@@ -500,6 +500,24 @@ unsigned __stdcall ManagementThreadFunction(void *data) {
   return 0;
 }
 
+/**
+ * the R versions this controller accepts.
+ *
+ * the headers this compiles against and the import libraries in lib/ come
+ * from one specific R release (see docs/BUILDING.md), but the embedding
+ * interface they describe has been stable across the 3.x and 4.x series,
+ * so a single binary can host any of them. the floor is the oldest series
+ * this code has been built against. there is deliberately no upper bound:
+ * the loader resolves the import libraries before main() runs, so a runtime
+ * that lacks a symbol we need has already failed to start by the time we
+ * get here. a newer major series than the one this build was tested with
+ * gets a warning rather than a refusal, so this does not turn back into
+ * the hard-coded barrier that the original major/minor equality test was.
+ */
+#define BERT_R_MINIMUM_MAJOR  3
+#define BERT_R_MINIMUM_MINOR  5
+#define BERT_R_TESTED_MAJOR   4
+
 void ScrubPath(char *string) {
 
   int len = strlen(string);
@@ -530,8 +548,19 @@ int main(int argc, char** argv) {
   MessageBoxA(0, rvx, "R version", MB_OK);
   */
 
-  if (major != 3) return PROCESS_ERROR_UNSUPPORTED_VERSION;
-  if( minor != 5) return PROCESS_ERROR_UNSUPPORTED_VERSION;
+  if (major < BERT_R_MINIMUM_MAJOR
+      || (major == BERT_R_MINIMUM_MAJOR && minor < BERT_R_MINIMUM_MINOR)) {
+    std::cerr << "unsupported R version " << major << "." << minor << "." << patch
+      << "; this build requires R " << BERT_R_MINIMUM_MAJOR << "."
+      << BERT_R_MINIMUM_MINOR << " or later" << std::endl;
+    return PROCESS_ERROR_UNSUPPORTED_VERSION;
+  }
+
+  if (major > BERT_R_TESTED_MAJOR) {
+    std::cerr << "warning: R " << major << "." << minor << "." << patch
+      << " is newer than the " << BERT_R_TESTED_MAJOR
+      << ".x series this build was tested with; continuing" << std::endl;
+  }
 
   std::stringstream ss;
   ss << "R::" << major << "." << minor << "." << patch;
