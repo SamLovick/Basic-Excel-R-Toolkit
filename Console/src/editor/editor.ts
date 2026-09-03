@@ -545,29 +545,52 @@ export class Editor {
 
     this.pending_active_languages_.forEach( id => this.AddExecActions(id));
 
-    // override context menu so it matches regular menus, other context menus
+    // clipboard shortcuts. monaco no longer registers clipboard actions of
+    // its own (see Copy), and since it moved to the EditContext input
+    // surface the browser's own paste no longer reaches the editor, so bind
+    // the keys to the same methods the menus use. binding them here also
+    // stops the browser acting on the same keystroke.
+
+    this.editor_.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, () => this.Copy());
+    this.editor_.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyX, () => this.Cut());
+    this.editor_.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, () => this.Paste());
+
+    // monaco's own context menu is switched off (contextmenu: false) so that
+    // this one matches the rest of the application. it used to be built by
+    // asking monaco's contextmenu contribution for its entries, but that is
+    // private and its shape changes between versions, so the entries are
+    // listed here. the clipboard entries are ours for the reason given on
+    // Copy, above.
 
     this.editor_.onContextMenu(e => {
 
-      let contribution = this.editor_.getContribution("editor.contrib.contextmenu") as any;
-      let menu_actions = contribution._getMenuActions();
+      let selection = this.editor_.getSelection();
+      let has_selection = !!(selection && !selection.isEmpty());
       let menu = new Menu();
 
-      menu_actions.forEach(action => {
-        if (action.id === "vs.actions.separator") {
-          menu.append(new MenuItem({ type: "separator" }));
-        }
-        else {
-          let keybinding = contribution._keybindingFor(action);
-          let accelerator = keybinding ? keybinding.getLabel() : null;
-          menu.append(new MenuItem({
-            label: action.label,
-            enabled: action.enabled,
-            accelerator: accelerator,
-            click: () => action.run()
-          }));
-        }
-      });
+      // accelerators here are labels only: registering them would take the
+      // keys away from the editor, which handles them itself
+
+      menu.append(new MenuItem({ label: Constants.editorCommands.cut, accelerator: "CmdOrCtrl+X",
+        registerAccelerator: false, enabled: has_selection, click: () => this.Cut() }));
+      menu.append(new MenuItem({ label: Constants.editorCommands.copy, accelerator: "CmdOrCtrl+C",
+        registerAccelerator: false, enabled: has_selection, click: () => this.Copy() }));
+      menu.append(new MenuItem({ label: Constants.editorCommands.paste, accelerator: "CmdOrCtrl+V",
+        registerAccelerator: false, click: () => this.Paste() }));
+      menu.append(new MenuItem({ type: "separator" }));
+      menu.append(new MenuItem({ label: Constants.editorCommands.selectAll, accelerator: "CmdOrCtrl+A",
+        registerAccelerator: false, click: () => this.SelectAll() }));
+
+      // the execute commands this class adds for each language it supports
+      // (see AddExecActions), so the context menu can still run code
+
+      let exec_actions = this.editor_.getSupportedActions().filter(action => /^editor\.exec_/.test(action.id));
+      if (exec_actions.length) {
+        menu.append(new MenuItem({ type: "separator" }));
+        exec_actions.forEach(action => {
+          menu.append(new MenuItem({ label: action.label, click: () => action.run() }));
+        });
+      }
 
       menu.popup({ window: remote.getCurrentWindow() });
 
@@ -760,6 +783,81 @@ export class Editor {
    */
   public Focus() {
     this.editor_.focus();
+  }
+
+  /**
+   * true when the editor holds the keyboard focus. note that opening a
+   * native menu takes focus away from the page, so this is no use for
+   * deciding what a menu command should act on; see renderer.
+   */
+  public HasFocus() {
+    return !!this.editor_ && this.editor_.hasTextFocus();
+  }
+
+  /**
+   * clipboard. monaco no longer registers cut, copy and paste actions of
+   * its own: it registered them only where the old document.execCommand
+   * editing commands were available, and chromium has withdrawn those from
+   * web content. the keyboard shortcuts still work, because the browser
+   * handles those itself on the hidden textarea monaco keeps the selection
+   * in, but anything driven from a menu has to do the work here.
+   */
+  public async Copy() {
+    let text = this.SelectedText();
+    if (text) await clipboard.writeText(text);
+  }
+
+  public async Cut() {
+    if (!this.editor_) return;
+    let selection = this.editor_.getSelection();
+    let text = this.SelectedText();
+    if (!text || !selection) return;
+    await clipboard.writeText(text);
+    this.editor_.executeEdits("cut", [{ range: selection, text: "", forceMoveMarkers: true }]);
+    this.editor_.focus();
+  }
+
+  public async Paste() {
+    if (!this.editor_) return;
+    let text = await clipboard.readText();
+    if (!text) return;
+
+    // the type command replaces the selection and leaves the cursor after
+    // the inserted text, which is what a paste should do
+
+    this.editor_.focus();
+    this.editor_.trigger("clipboard", "type", { text });
+  }
+
+  public SelectAll() {
+    if (!this.editor_) return;
+    let model = this.editor_.getModel();
+    if (model) this.editor_.setSelection(model.getFullModelRange());
+    this.editor_.focus();
+  }
+
+  public Find() { this.RunAction("actions.find"); }
+
+  public Replace() { this.RunAction("editor.action.startFindReplaceAction"); }
+
+  /** text of the current selection, empty if there is none */
+  private SelectedText() {
+    if (!this.editor_) return "";
+    let selection = this.editor_.getSelection();
+    let model = this.editor_.getModel();
+    if (!model || !selection || selection.isEmpty()) return "";
+    return model.getValueInRange(selection);
+  }
+
+  /** runs a monaco action by id, if this build of monaco has it */
+  private RunAction(id: string) {
+    if (!this.editor_) return;
+    let action = this.editor_.getAction(id);
+    if (action) {
+      this.editor_.focus();
+      action.run();
+    }
+    else console.warn("editor action not found:", id);
   }
 
   /** 

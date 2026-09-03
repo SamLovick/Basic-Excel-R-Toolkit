@@ -152,6 +152,11 @@ window.addEventListener("beforeunload", event => {
 
 let editor = new Editor("#editor", properties.editor);
 
+// with dev flags set, put the editor where the devtools console can reach
+// it, as the terminal already does for itself (see TerminalImplementation)
+
+if (dev_flags) window["editor"] = editor;
+
 editor.events.subscribe(event => {
   if( event.type === EditorEventType.Command ){
     switch(event.message){
@@ -293,9 +298,44 @@ MenuUtilities.SetCheck("main.view.show-shell",
   typeof properties.terminal.show_shell === "undefined" || properties.terminal.show_shell);
 
 
+// which pane the Edit menu acts on. opening a native menu takes the focus
+// away from the page, so the pane has to be remembered rather than asked
+// for at the point the menu item is clicked.
+
+let last_focus_pane = "editor";
+
+document.addEventListener("focusin", () => {
+  let active = document.activeElement;
+  if (!active) return;
+  if (active.closest("#terminals")) last_focus_pane = "shell";
+  else if (active.closest("#editor")) last_focus_pane = "editor";
+});
+
 MenuUtilities.events.subscribe(event => {
 
   switch(event.id){
+
+  // edit. the shell has its own clipboard handling, because what is
+  // selected there is xterm's selection rather than a DOM selection, and
+  // cut has no meaning in it.
+
+  case "main.edit.cut":
+    if (last_focus_pane === "editor") editor.Cut();
+    break;
+  case "main.edit.copy":
+    if (last_focus_pane === "editor") editor.Copy();
+    else terminals.SendCommand("copy");
+    break;
+  case "main.edit.paste":
+    if (last_focus_pane === "editor") editor.Paste();
+    else terminals.SendCommand("paste");
+    break;
+  case "main.edit.find":
+    editor.Find();
+    break;
+  case "main.edit.replace":
+    editor.Replace();
+    break;
 
   // dev
 

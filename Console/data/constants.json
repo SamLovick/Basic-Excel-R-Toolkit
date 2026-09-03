@@ -21,7 +21,11 @@
 
   "editorCommands": {
     "executeBuffer": "Execute Entire Buffer",
-    "executeSelection": "Execute Selection"
+    "executeSelection": "Execute Selection",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "selectAll": "Select All"
   },
 
   "shell": {
