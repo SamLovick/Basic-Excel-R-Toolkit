@@ -200,8 +200,11 @@ CheckExcelRunning:
   File ..\Build\BERT64.xll
   File ..\Build\BERTRibbon2x64.dll
   File ..\Build\ControlR.exe
-  File ..\Build\libprotobuf.dll
-  File ..\Build\abseil_dll.dll
+
+  ; protobuf is linked statically now; remove the DLLs an earlier build
+  ; shipped, which needed the Visual C++ redistributable
+  Delete "$INSTDIR\libprotobuf.dll"
+  Delete "$INSTDIR\abseil_dll.dll"
 
   ; the language list, with the detected R filled in
   File "bert-languages.template.json"

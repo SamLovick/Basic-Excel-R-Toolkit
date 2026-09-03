@@ -85,8 +85,18 @@ if (-not $SkipConsole) {
 }
 
 # ---- what a release contains -----------------------------------------------
-$files = "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe", "libprotobuf.dll", "abseil_dll.dll",
+$files = "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe",
          "bert-config-template.json", "user-stylesheet-template.less", "Welcome.md", "bert2.ico"
+
+# the binaries must not need the Visual C++ redistributable: everything is
+# linked against the static runtime, protobuf included (x64-windows-static)
+foreach ($f in "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe") {
+  $bytes = [IO.File]::ReadAllBytes((Join-Path $build $f))
+  $text = [Text.Encoding]::ASCII.GetString($bytes)
+  foreach ($dll in "VCRUNTIME140", "MSVCP140", "libprotobuf.dll", "abseil_dll.dll") {
+    if ($text.IndexOf($dll, [StringComparison]::OrdinalIgnoreCase) -ge 0) { Fail "$f imports $dll; build with the static vcpkg triplet" }
+  }
+}
 $dirs = "Console", "module", "startup"
 foreach ($f in $files) { if (-not (Test-Path (Join-Path $build $f))) { Fail "missing $f in Build" } }
 foreach ($d in $dirs) { if (-not (Test-Path (Join-Path $build $d))) { Fail "missing $d\ in Build" } }
@@ -94,6 +104,11 @@ foreach ($d in $dirs) { if (-not (Test-Path (Join-Path $build $d))) { Fail "miss
 # ---- installer -------------------------------------------------------------
 if (-not $SkipInstaller) {
   Step "installer (makensis)"
+  if (-not (Get-Command $MakeNsis -ErrorAction SilentlyContinue)) {
+    $found = "${env:ProgramFiles(x86)}\NSIS\makensis.exe", "$env:ProgramFiles\NSIS\makensis.exe" | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $found) { Fail "makensis not found; install NSIS or pass -MakeNsis" }
+    $MakeNsis = $found
+  }
   Push-Location $here
   try {
     & $MakeNsis "/DVERSION=$Version" install-script.nsi

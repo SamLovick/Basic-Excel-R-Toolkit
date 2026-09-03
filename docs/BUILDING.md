@@ -30,6 +30,10 @@ original 2018 setup and is kept for reference.
   and `BERT/vcpkg-configuration.json` pins the registry baseline. The first
   build of each project installs the dependencies into a `vcpkg_installed/`
   directory beside it, which is ignored by git and can be deleted freely.
+  The x64 configurations use the `x64-windows-static` triplet, so protobuf
+  and abseil are linked into the binaries: like the rest of the build they
+  use the static C runtime, and the shipped files need no Visual C++
+  redistributable on the target machine.
 * An R installation. The tree is currently built against R 4.5.2; see
   "The R installation" below.
 * The Excel SDK, for the add-in project only.
