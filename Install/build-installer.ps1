@@ -60,7 +60,7 @@ $logfile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPa
 # read the version string from the header file
 #
 Function GetVersion() {
-	$m = select-string ..\BERT\BERT\include\BERT_Version.h -pattern "BERT_VERSION\s+L""(.*)"""
+	$m = select-string ..\BERT\BERT\include\BERT_Version.h -pattern "BERT_VERSION_NUMBER\s+L""(.*)"""
 	$v  = $m.Matches[0].Groups[1].Value
 	return $v;
 }
