@@ -114,11 +114,12 @@ plain fills, which is what happens today.
 * **Julia.** The 0.6 and 0.7 embedding API does not exist in Julia 1.x, so
   supporting current Julia is a rewrite of the controller, not an upgrade.
   Decide whether to drop it. Either way it is separate from the R work.
-* **Installer.** The NSIS script bundles R 3.5.0 and removes older bundled
-  copies. Change it to use an R already installed (the registry key
-  `HKLM\SOFTWARE\R-core\R\InstallPath` gives the current one) and write
-  the chosen home into `bert-config.json`, or bundle a current R. Bundling
-  is what tied BERT to one R version in the first place.
+* **Installer.** Done on the `console-upgrade` branch: the NSIS script no
+  longer bundles R, is 64-bit only, finds the installed R in the registry
+  and writes it into `bert-languages.json`, and leaves the user's settings
+  alone when installing over an existing BERT 2. `Install\build-release.ps1`
+  produces the installer and a zip. The installer is not code-signed, so
+  SmartScreen warns on first run.
 * **CI.** A GitHub Actions workflow on a Windows runner can build `ControlR`
   and the add-in with MSBuild and cache the vcpkg install. The hosted image
   may not carry the v145 toolset; `/p:PlatformToolset` can override it for

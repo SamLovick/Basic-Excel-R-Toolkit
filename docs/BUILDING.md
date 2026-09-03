@@ -132,6 +132,34 @@ console from source (it needs the environment the add-in sets, at least
 which is what the installer ships and what the add-in starts. The
 dependencies are pinned by `package-lock.json`.
 
+## Making a release
+
+`Install\build-release.ps1` builds everything a release needs and packages
+it:
+
+```powershell
+cd Install
+.\build-release.ps1
+```
+
+It reads the version from `bert_version.h` (number plus tag), builds the
+native projects, installs the `BERTModule` R package into `Build\module`
+with the registered R (needs Rtools), packages the console, runs `makensis`
+on `install-script.nsi`, and zips the same files with `INSTALL-FROM-ZIP.md`.
+Each stage has a `-Skip...` switch; `-Version` and `-RHome` override the
+detection. Outputs land in `Install\`: `BERT-Installer-<version>-x64.exe`
+and `BERT-<version>-x64.zip`.
+
+The installer is 64-bit only, does not bundle R, and installs over an
+existing BERT 2 without touching `bert-config.json`, `user-stylesheet.less`
+or `Documents\BERT2`; the console, module and startup directories are
+replaced. It finds the current R in the registry (where the R installer
+records it) and writes it into `bert-languages.json` after the bundled
+`R-3.5.0` an older installer may have left, so an existing installation
+moves to the installed R without anyone editing a file, and `BERT.R.home`
+in `bert-config.json` still overrides it. The module is compiled with the R
+used for the build, so a release built with R 4.5 needs R 4.x to load it.
+
 ## Running against your own R
 
 BERT reads `Build\bert-languages.json` (installed as `bert-languages.json`

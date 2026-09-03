@@ -37,3 +37,12 @@ ARM64EC/
 *.7z
 Console/generated/variable_pb_new.js
 Console/generated/variable_pb_old.js
+
+# release outputs (Install/build-release.ps1)
+Install/BERT-Installer-*.exe
+Install/BERT-*.zip
+Install/build-log.txt
+
+# R CMD INSTALL byproducts in the module source
+Module/src/*.dll
+Module/src/*.o
