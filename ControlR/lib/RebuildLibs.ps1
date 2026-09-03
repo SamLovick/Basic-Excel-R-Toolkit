@@ -9,8 +9,18 @@
 # parameters
 #=============================================
 
+# usage: .\RebuildLibs.ps1 -R <R home> -def -x64 [-ARM64] [-x86]
+#
+# run from a Visual Studio developer prompt (needs dumpbin and lib). -def
+# regenerates the .def files from the R.dll and RGraphApp.dll exports in
+# <R home>; the other switches build import libraries from those .def files.
+# -ARM64 produces ARM64X libraries for the ARM64EC configuration; they are
+# built from the x64 exports because R for Windows ships x64 binaries only.
+# -x86 needs an R with an i386 build, which R stopped shipping in 4.2.0.
+
 Param(	[switch]$x86,
 	[switch]$x64,
+	[switch]$ARM64,
 	[switch]$def,
 	[switch]$all,
 	[String]$R
@@ -52,7 +62,6 @@ Function GenerateDef( $sub, $key ) {
 
 	$symbols = dumpbin /exports $r\bin\$sub\R.dll | Out-String
 	ExitOnError;
-	Write-Host "11";
 	
 	$symbols = ($symbols -replace "(?s)^.*ordinal.*?\n", "");
 	$symbols = ($symbols -replace "(?s)\n\s*Summary.*?$", "");
@@ -80,11 +89,11 @@ Function GenerateDef( $sub, $key ) {
 #---------------------------------------------
 # create the lib file from the .def
 #---------------------------------------------
-Function GenerateLib( $machine, $key ){
+Function GenerateLib( $machine, $key, $suffix ){
 
-	Write-Host "Generating $key-bit libs" -foregroundcolor yellow ;
-	lib /machine:$machine /def:R$key.def /out:R$key.lib
-	lib /machine:$machine /def:RGraphApp$key.def /out:RGraphApp$key.lib
+	Write-Host "Generating $key-bit libs for $machine" -foregroundcolor yellow ;
+	lib /machine:$machine /def:R$key.def /out:R$key$suffix.lib
+	lib /machine:$machine /def:RGraphApp$key.def /out:RGraphApp$key$suffix.lib
 	ExitOnError;
 
 }
@@ -96,16 +105,12 @@ Function GenerateLib( $machine, $key ){
 Write-Host "";
 if( $def ){
 	if( $x86 ){ GenerateDef "i386" "32"  }
-	if( $x64 ){ GenerateDef "x64" "64"  }
+	if( $x64 -or $ARM64 ){ GenerateDef "x64" "64"  }
 	Write-Host "";
 }
-if( $x86 ){ GenerateLib "X86" "32" }
-if( $x64 ){ GenerateLib "X64" "64" }
+if( $x86 ){ GenerateLib "X86" "32" "" }
+if( $x64 ){ GenerateLib "X64" "64" "" }
+if( $ARM64 ){ GenerateLib "ARM64X" "64" "arm" }
 Write-Host "";
 Write-Host "Done" -foregroundcolor green;
 Write-Host "";
-
-
-
-
-
