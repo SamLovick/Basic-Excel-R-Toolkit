@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="source">
+      <UniqueIdentifier>{eaec0e65-b09a-4f4a-b0cf-36767ab73c6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{c7527adb-7d4d-47cb-95c8-e837c5f10af9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PB">
+      <UniqueIdentifier>{c356d784-9c8e-4e2e-ae6f-46120e8ca313}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{d7221d55-a44b-4131-952c-de4b56a561f6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\PB\variable.pb.cc">
+      <Filter>PB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\pipe.cc">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\message_utilities.cc">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\console_graphics_device.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\controlr.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\convert.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rinterface_common.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rinterface_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\spreadsheet_graphics_device.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gdi_graphics_device.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\windows_api_functions.cc">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\json11\json11.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\PB\variable.pb.h">
+      <Filter>PB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\pipe.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\process_exit_codes.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\string_utilities.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\message_utilities.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\console_graphics_device.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\controlr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\controlr_common.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\convert.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\spreadsheet_graphics_device.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gdi_graphics_device.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\windows_api_functions.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\json11\json11.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PB\variable.proto">
+      <Filter>PB</Filter>
+    </None>
+  </ItemGroup>
+</Project>
