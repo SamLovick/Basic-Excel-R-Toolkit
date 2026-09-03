@@ -18,6 +18,7 @@
  */
 
 #include "controlr.h"
+#include "convert.h"
 #include "windows_api_functions.h"
 #include "json11\json11.hpp"
 
@@ -388,8 +389,13 @@ int InputStreamRead(const char *prompt, char *buf, int len, int addtohistory, bo
               break;
 
             case BERTBuffers::CallResponse::kShellCommand:
-              len = min(len - 2, (int)call.shell_command().length());
-              strcpy_s(buf, len + 1, call.shell_command().c_str());
+              {
+                // the console sends UTF-8; before 4.2.0 R expects the
+                // windows code page here, the mirror of R_WriteConsoleEx
+                std::string command = r_console_utf8 ? call.shell_command() : UTF8ToWindowsCP(call.shell_command());
+                len = min(len - 2, (int)command.length());
+                strcpy_s(buf, len + 1, command.c_str());
+              }
               buf[len++] = '\n';
               buf[len++] = 0;
               prompt_transaction_id = call.id();

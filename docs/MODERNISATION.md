@@ -47,26 +47,28 @@ change, and what is still to do, in a suggested order.
 The 4.2.0 switch to UTF-8 is the change most likely to produce wrong
 characters rather than a crash, and it cuts both ways: code written for
 code-page R mangles UTF-8, and code written for UTF-8 R mangles code-page
-strings. The branch handles one path, console output. The remaining paths
-in `ControlR/src/rinterface_common.cc` and `controlr.cc` are:
+strings. The controller now handles all four paths on the `console-upgrade`
+branch (see the encoding note at the top of
+`ControlR/src/rinterface_common.cc`):
 
-1. **R strings out to Excel and the console.** `CHAR(Rf_asChar(x))` is
-   passed through a validity heuristic and converted from the code page if
-   it fails. Replace with `Rf_translateCharUTF8`, which honours the encoding
-   mark each string carries and is correct on every version. This removes
-   the heuristic.
-2. **Strings in from Excel and the console.** `Rf_mkString` builds a
-   native-encoded string from what are UTF-8 bytes, which is only right from
-   4.2.0. Use `Rf_mkCharCE(s, CE_UTF8)` with `Rf_ScalarString` or
-   `SET_STRING_ELT`, which is right everywhere. There are 28 call sites.
-3. **Console input.** `R_ReadConsole` hands R the UTF-8 the console sent.
-   Before 4.2.0 R expects the code page; convert when `r_console_utf8` is
-   false, mirroring the output side.
-4. **Paths.** The R home, the functions directory and file names cross the
-   process boundary as narrow strings. Check what encoding the add-in sends
-   and that the controller passes it on as R expects for its version.
+1. **R strings out to Excel and the console** go through
+   `Rf_translateCharUTF8`, which honours the encoding mark each string
+   carries, instead of a validity heuristic and a code-page conversion.
+2. **Strings in from Excel and the console** are marked UTF-8
+   (`Rf_mkCharLenCE` with `CE_UTF8`). The add-in converts Excel's UTF-16
+   strings and COM names to UTF-8, so the bytes are UTF-8 on every R version.
+3. **Console output and input** are converted to and from the Windows code
+   page only under an R older than 4.2.0, decided once at startup from the
+   version R reports.
+4. **Paths** are the remaining gap. The add-in lists the functions directory
+   with the ANSI file APIs, so file names reach the controller in the Windows
+   code page, and `source()` is given them as native strings. That is right
+   before 4.2.0 and wrong after it for names outside ASCII. The fix belongs
+   in the add-in: use the wide file APIs and send UTF-8, then mark the path
+   UTF-8 in the controller like every other string.
 
-After 1 to 3, `ValidUTF8` and `WindowsCPToUTF8` only serve the pre-4.2 path.
+`ValidUTF8` and `WindowsCPToUTF8` now serve only the pre-4.2 console
+output path.
 
 ## Graphics devices
 
