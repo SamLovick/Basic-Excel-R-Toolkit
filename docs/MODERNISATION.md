@@ -14,9 +14,18 @@ change, and what is still to do, in a suggested order.
   version at startup instead of demanding exactly 3.5, and switches console
   output handling on the 4.2.0 change of native encoding. It starts under
   R 3.5.0, 4.2.2 and 4.5.2. Only 4.5.2 has been used with Excel.
-* The console is unchanged apart from regenerated protobuf code and two
-  small fixes. It is pinned to Electron 1.8, TypeScript 2.7, xterm 3.2,
-  monaco 0.10 and rxjs 5.
+* The console (on the `console-upgrade` branch) runs on Electron 44,
+  TypeScript 7, Monaco 0.56, xterm 6, rxjs 7 and google-protobuf 4, with
+  the smaller libraries current too. It keeps its architecture: Node in
+  the renderer, `@electron/remote` for the few main-process calls. It has
+  been used inside Excel: pipes connect, the editor and the R shell work.
+  Left over from that work: the code is compiled with strict mode off
+  and would benefit from being made strict-clean; Monaco is still loaded
+  through its AMD loader, which in an Electron renderer uses Node's `vm`
+  module (Electron warns about it), and the way out is bundling Monaco as
+  ES modules; the page has no content security policy; the protobuf
+  JavaScript is generated code from the 3.21 generator running on the 4.0
+  runtime, and can be regenerated with protoc-gen-js 4.0.
 * The Julia controllers target Julia 0.6 and 0.7 and are untouched. They
   cannot host Julia 1.x.
 * The installer still bundles R 3.5.0.

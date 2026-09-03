@@ -106,16 +106,20 @@ msbuild ControlR\ControlR.vcxproj /p:Configuration=Release /p:Platform=x64
 `msbuild` is at `C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe`
 if it is not on your path. x64 output goes to `Build\`; the ARM64EC configurations write to `ControlR\ARM64EC\<Configuration>\` instead.
 
-The console is built separately with yarn, from `Console/`:
+The console is built separately with npm, from `Console/`:
 
 ```powershell
-yarn install
-yarn build
-yarn package
+npm install
+npm run build
+npm run package
 ```
 
-The console's dependencies are pinned by `yarn.lock` to the versions the
-code was written against, which are old; see `MODERNISATION.md`.
+`npm install` also downloads the Electron binary. `npm run build` compiles
+the stylesheet and the TypeScript into `build/`; `npm start` then runs the
+console from source (it needs the environment the add-in sets, at least
+`BERT_HOME`), and `npm run package` produces `Build\Console\win-unpacked`,
+which is what the installer ships and what the add-in starts. The
+dependencies are pinned by `package-lock.json`.
 
 ## Running against your own R
 
