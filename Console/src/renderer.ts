@@ -155,7 +155,10 @@ let editor = new Editor("#editor", properties.editor);
 // with dev flags set, put the editor where the devtools console can reach
 // it, as the terminal already does for itself (see TerminalImplementation)
 
-if (dev_flags) window["editor"] = editor;
+if (dev_flags) {
+  window["editor"] = editor;
+  window["menu"] = MenuUtilities;
+}
 
 editor.events.subscribe(event => {
   if( event.type === EditorEventType.Command ){
