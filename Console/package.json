@@ -40,7 +40,7 @@
     "chokidar": "^2.0.1",
     "electron-reload": "^1.2.2",
     "electron-window-state": "^4.1.1",
-    "google-protobuf": "^3.5.0",
+    "google-protobuf": "^3.21.4",
     "js-base64": "^2.4.3",
     "less": "^3.0.1",
     "markdown-it": "^8.4.0",
