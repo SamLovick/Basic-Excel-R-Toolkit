@@ -192,10 +192,17 @@ export class RInterface extends LanguageInterface {
       let regex = /<tr>[\s\S]*?<td>[\s\S]*?<a.*?>(.*?)<\/a>[\s\S]*?<\/td>[\s\S]*?<td>([\s\S]*?)<\/td>/g;
       let match;
       
+      // the package name cell now carries markup of its own; CRAN wraps
+      // some names in <span class="CRAN">. strip any tags rather than that
+      // one span, so a later change to the page cannot leak markup into the
+      // completion list.
+
       data = [];
       let index = 0;
       while(match = regex.exec(html)){
-        data.push({name: match[1], description: match[2], index:index++});
+        let name = match[1].replace(/<[^>]*>/g, "").trim();
+        if(!name.length) continue;
+        data.push({name, description: match[2], index:index++});
       }
       DataCache.Store(key, data);
 
