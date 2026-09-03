@@ -38,6 +38,7 @@ const TabContextMenuData = require("../../data/menus/editor_tab_context_menu.jso
 const SchemaSchema = require("../../data/schemas/schema.schema.json");
 
 import { MenuUtilities } from '../ui/menu_utilities';
+import { AlertManager } from '../ui/alert';
 import { Utilities } from '../common/utilities';
 import { UserStylesheet } from '../ui/user_stylesheet';
 import { TabPanel, TabJustify, TabEventType, TabSpec } from '../ui/tab_panel';
@@ -111,6 +112,9 @@ interface OpenFileOptions {
  * type (using the reference).
  */
 export class Editor {
+
+  /** asks about unsaved changes when a file is closing */
+  private alerts_ = new AlertManager();
 
   /** flag for loading, in case we have multiple instances */
   static loaded_ = false;
@@ -402,11 +406,11 @@ export class Editor {
         break;
       case "tab.close-others":
         copy = this.tabs_.tabs.slice(0);
-        copy.forEach(item => { if(item !== tab) this.CloseTab(item)});
+        this.CloseTabs(copy.filter(item => item !== tab));
         break;
       case "tab.close-all":
         copy = this.tabs_.tabs.slice(0);
-        copy.forEach(item => this.CloseTab(item));
+        this.CloseTabs(copy);
         break;
       case "tab.copy-path":
         clipboard.writeText(document.file_path_);
@@ -1192,9 +1196,56 @@ export class Editor {
    * closes tab. called on button click, or via one of the menu
    * items (close, close others, &c).
    */
-  private CloseTab(tab: TabSpec) {
+  /**
+   * a document with unsaved changes is about to close. asks what to do with
+   * them: this is the last chance to keep them.
+   */
+  private async PromptUnsaved(tab: TabSpec) : Promise<"save"|"discard"|"cancel"> {
 
-    // FIXME: warn if dirty
+    let labels = Constants.dialogs.closeUnsaved;
+
+    let result = await this.alerts_.Show({
+      escape: true,
+      title: labels.title,
+      message: (labels.message || "").replace(/\$FILE/, tab.label || ""),
+      buttons: [labels.save, labels.discard, labels.cancel]
+    });
+
+    // escape, or anything we don't recognise, leaves the file open
+
+    if (result.result !== "button") return "cancel";
+    if (result.data === labels.save) return "save";
+    if (result.data === labels.discard) return "discard";
+    return "cancel";
+  }
+
+  /**
+   * closes several tabs, one after the other, so the questions about unsaved
+   * changes come one at a time. stops at the first file the user keeps.
+   */
+  private async CloseTabs(tabs: TabSpec[]) {
+    for (let entry of tabs) {
+      if (!await this.CloseTab(entry)) return;
+    }
+  }
+
+  /**
+   * closes a tab. returns false if the file stayed open, either because the
+   * user cancelled or because a save they asked for did not happen.
+   */
+  private async CloseTab(tab: TabSpec) : Promise<boolean> {
+
+    // unsaved changes used to go without a word
+
+    let closing_document = tab.data as Document;
+    if (closing_document && closing_document.dirty_) {
+      let choice = await this.PromptUnsaved(tab);
+      if (choice === "cancel") return false;
+      if (choice === "save") {
+        let saved = await this.SaveTab(tab);
+        if (!saved) return false;
+      }
+    }
 
     if (tab === this.active_tab_) {
       if (this.tabs_.count > 1) this.tabs_.Previous(); // FIXME: maybe have an MRU order stack? ...
@@ -1216,6 +1267,8 @@ export class Editor {
     }
 
     if(document.file_path_) FileWatcher.Unwatch(document.file_path_);
+
+    return true;
 
   }
 
@@ -1374,7 +1427,7 @@ export class Editor {
    * force_dialog is for "save as", can also be used in any case you
    * don't necessarily want to overwrite.
    */
-  public SaveTab(tab: TabSpec, save_as_dialog = false) {
+  public SaveTab(tab: TabSpec, save_as_dialog = false) : Promise<boolean> {
 
     let document = tab.data as Document;
     let file_path = document.file_path_;
@@ -1393,23 +1446,32 @@ export class Editor {
 
       if(!file_path) {
         console.info("save as canceled");
-        return;
+        return Promise.resolve(false);
       }
 
     }
 
-    if (file_path) {
+    if (!file_path) return Promise.resolve(false);
+
+    // resolves true only once the file is on disk, so a caller closing the
+    // tab knows the changes are safe
+
+    return new Promise<boolean>(resolve => {
 
       if(FileWatcher.IsWatching(file_path)) {
+
         // because the watcher won't unset if we don't get notified
+
         document.save_pending_ = true;
       }
 
       let contents = document.model_.getValue();
+
       fs.writeFile(file_path, contents, "utf8", err => {
         if (err) {
           document.save_pending_ = false;
           console.error(err);
+          resolve(false);
         }
         else {
           tab.dirty = document.dirty_ = false;
@@ -1425,9 +1487,11 @@ export class Editor {
           this.CacheDocument(document);
           this.tabs_.UpdateTab(tab);
           if(save_as_dialog) this.UpdateRecentFiles(file_path, true);
+          resolve(true);
         }
       });
-    }
+
+    });
 
   }
 
