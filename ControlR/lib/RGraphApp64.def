@@ -1,25 +1,25 @@
 LIBRARY RGraphApp
 EXPORTS
 
-GA_ArrowCursor
-GA_BlankCursor
+GA_ArrowCursor DATA
+GA_BlankCursor DATA
 GA_BringToTop
-GA_CaretCursor
+GA_CaretCursor DATA
 GA_ColorName
-GA_Courier
-GA_CrossCursor
-GA_FixedFont
+GA_Courier DATA
+GA_CrossCursor DATA
+GA_FixedFont DATA
 GA_GetCurrentWinPos
-GA_HandCursor
-GA_Helvetica
+GA_HandCursor DATA
+GA_Helvetica DATA
 GA_MDIFrame
 GA_MDIStatus
 GA_MDIToolbar
-GA_SystemFont
-GA_TextCursor
-GA_Times
+GA_SystemFont DATA
+GA_TextCursor DATA
+GA_Times DATA
 GA_TopmostDialogs
-GA_WatchCursor
+GA_WatchCursor DATA
 GA_activatecontrol
 GA_add_strings
 GA_addpt

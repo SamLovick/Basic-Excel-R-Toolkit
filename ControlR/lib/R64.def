@@ -183,22 +183,22 @@ RFrame
 R_AccuracyInfo
 R_ActiveBindingFunction
 R_AllocStringBuffer
-R_AsCharacterSymbol
-R_AtsignSymbol
+R_AsCharacterSymbol DATA
+R_AtsignSymbol DATA
 R_BCFrame
 R_BCNodeStackEnd
 R_BCNodeStackTop
 R_BadLongVector
-R_BaseEnv
-R_BaseNamespace
-R_BaseSymbol
+R_BaseEnv DATA
+R_BaseNamespace DATA
+R_BaseSymbol DATA
 R_BindingIsActive
 R_BindingIsLocked
-R_BlankScalarString
-R_BlankString
-R_BraceSymbol
-R_Bracket2Symbol
-R_BracketSymbol
+R_BlankScalarString DATA
+R_BlankString DATA
+R_BraceSymbol DATA
+R_Bracket2Symbol DATA
+R_BracketSymbol DATA
 R_Busy
 R_BytecodeExpr
 R_CHAR
@@ -210,7 +210,7 @@ R_CheckDeviceAvailableBool
 R_CheckStack
 R_CheckStack2
 R_CheckUserInterrupt
-R_ClassSymbol
+R_ClassSymbol DATA
 R_CleanTempDir
 R_CleanUp
 R_ClearExternalPtr
@@ -221,21 +221,21 @@ R_ClosureExpr
 R_ClosureFormals
 R_Consolefile
 R_ContinueUnwind
-R_CurrentExpression
+R_CurrentExpression DATA
 R_DefParams
 R_DefParamsEx
-R_DeviceSymbol
-R_DimNamesSymbol
-R_DimSymbol
-R_DirtyImage
-R_DollarSymbol
-R_DotsSymbol
-R_DoubleColonSymbol
-R_DropSymbol
+R_DeviceSymbol DATA
+R_DimNamesSymbol DATA
+R_DimSymbol DATA
+R_DirtyImage DATA
+R_DollarSymbol DATA
+R_DotsSymbol DATA
+R_DoubleColonSymbol DATA
+R_DropSymbol DATA
 R_EditFiles
-R_EmptyEnv
+R_EmptyEnv DATA
 R_EnvironmentIsLocked
-R_EvalSymbol
+R_EvalSymbol DATA
 R_ExecWithCleanup
 R_ExpandFileName
 R_ExpandFileNameUTF8
@@ -252,7 +252,7 @@ R_FixupRHS
 R_FlushConsole
 R_FreeStringBuffer
 R_FunTab
-R_FunctionSymbol
+R_FunctionSymbol DATA
 R_GE_checkVersionOrDie
 R_GE_clipPathFillRule
 R_GE_getVersion
@@ -315,14 +315,14 @@ R_GetFDLimit
 R_GetSrcFilename
 R_GetVarLocMISSING
 R_GlobalContext
-R_GlobalEnv
+R_GlobalEnv DATA
 R_HasFancyBindings
 R_HashtabSEXP
 R_HistoryFile
 R_HistorySize
 R_Home
 R_HomeDir
-R_InBCInterpreter
+R_InBCInterpreter DATA
 R_InitConnInPStream
 R_InitConnOutPStream
 R_InitFileInPStream
@@ -334,8 +334,8 @@ R_IsNA
 R_IsNaN
 R_IsNamespaceEnv
 R_IsPackageEnv
-R_LastvalueSymbol
-R_LevelsSymbol
+R_LastvalueSymbol DATA
+R_LevelsSymbol DATA
 R_LockBinding
 R_LockEnvironment
 R_LogicalNAValue
@@ -347,25 +347,25 @@ R_MakeUnwindCont
 R_MakeWeakRef
 R_MakeWeakRefC
 R_MethodsNamespace
-R_MissingArg
+R_MissingArg DATA
 R_MissingArgError
 R_MissingArgError_c
-R_ModeSymbol
-R_NaInt
-R_NaN
-R_NaReal
-R_NaRmSymbol
-R_NaString
-R_NameSymbol
-R_NamesSymbol
+R_ModeSymbol DATA
+R_NaInt DATA
+R_NaN DATA
+R_NaReal DATA
+R_NaRmSymbol DATA
+R_NaString DATA
+R_NameSymbol DATA
+R_NamesSymbol DATA
 R_NamespaceEnvSpec
-R_NamespaceEnvSymbol
-R_NamespaceRegistry
-R_NegInf
+R_NamespaceEnvSymbol DATA
+R_NamespaceRegistry DATA
+R_NegInf DATA
 R_NewEnv
 R_NewHashedEnv
 R_NewPreciousMSet
-R_NilValue
+R_NilValue DATA
 R_NoEcho
 R_OldCStackLimit
 R_Outputfile
@@ -374,7 +374,7 @@ R_PPStackSize
 R_PPStackTop
 R_PV
 R_PackageEnvName
-R_PackageSymbol
+R_PackageSymbol DATA
 R_ParentEnv
 R_ParseContext
 R_ParseContextLast
@@ -384,14 +384,14 @@ R_ParseErrorMsg
 R_ParseEvalString
 R_ParseString
 R_ParseVector
-R_PosInf
+R_PosInf DATA
 R_PreserveInMSet
 R_PreserveObject
-R_PreviousSymbol
+R_PreviousSymbol DATA
 R_ProcessEvents
 R_PromiseExpr
 R_ProtectWithIndex
-R_QuoteSymbol
+R_QuoteSymbol DATA
 R_ReadConnection
 R_ReadConsole
 R_RegisterCCallable
@@ -409,14 +409,14 @@ R_RestoreGlobalEnv
 R_RestoreGlobalEnvFromFile
 R_RestoreHashCount
 R_RestoreHistory
-R_RowNamesSymbol
+R_RowNamesSymbol DATA
 R_RunExitFinalizers
 R_RunPendingFinalizers
 R_RunWeakRefFinalizer
 R_S4_extends
 R_SaveGlobalEnv
 R_SaveGlobalEnvToFile
-R_SeedsSymbol
+R_SeedsSymbol DATA
 R_Serialize
 R_SetExternalPtrAddr
 R_SetExternalPtrProtected
@@ -426,19 +426,19 @@ R_ShowMessage
 R_SignalCStackOverflow
 R_SignalHandlers
 R_SizeFromEnv
-R_SortListSymbol
-R_SourceSymbol
-R_SpecSymbol
+R_SortListSymbol DATA
+R_SourceSymbol DATA
+R_SpecSymbol DATA
 R_SrcfileSymbol
-R_Srcref
+R_Srcref DATA
 R_SrcrefSymbol
 R_Suicide
-R_TempDir
+R_TempDir DATA
 R_ToplevelExec
-R_TripleColonSymbol
+R_TripleColonSymbol DATA
 R_TrueValue
-R_TspSymbol
-R_UnboundValue
+R_TspSymbol DATA
+R_UnboundValue DATA
 R_Unserialize
 R_UnwindProtect
 R_Visible
@@ -456,7 +456,7 @@ R_altrep_data2
 R_altrep_inherits
 R_asHashtable
 R_atof
-R_baseSymbol
+R_baseSymbol DATA
 R_bcDecode
 R_bcEncode
 R_body_no_src
@@ -486,12 +486,12 @@ R_do_MAKE_CLASS
 R_do_new_object
 R_do_slot
 R_do_slot_assign
-R_dot_Generic
+R_dot_Generic DATA
 R_dot_Last
-R_dot_Method
-R_dot_defined
-R_dot_packageName
-R_dot_target
+R_dot_Method DATA
+R_dot_defined DATA
+R_dot_packageName DATA
+R_dot_target DATA
 R_duplicate_attr
 R_envHasNoSpecialSymbols
 R_execMethod
@@ -524,8 +524,8 @@ R_gzgets
 R_gzopen
 R_has_methods_attached
 R_has_slot
-R_interrupts_pending
-R_interrupts_suspended
+R_interrupts_pending DATA
+R_interrupts_suspended DATA
 R_isForkedChild
 R_isHashtable
 R_isTRUE
@@ -1170,7 +1170,7 @@ TerminateWindow
 UNIMPLEMENTED
 UNIMPLEMENTED_TYPE
 UNSET_S4_OBJECT
-UserBreak
+UserBreak DATA
 User_norm_fun
 User_unif_init
 VECTOR_ELT
@@ -1280,7 +1280,7 @@ locale2charset
 localeCP
 max_contour_segments
 mbcsValid
-mbcslocale
+mbcslocale DATA
 mbrtoint
 msgwindow
 newconsoledata

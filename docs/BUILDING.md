@@ -104,7 +104,7 @@ msbuild ControlR\ControlR.vcxproj /p:Configuration=Release /p:Platform=x64
 ```
 
 `msbuild` is at `C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe`
-if it is not on your path. Output goes to `Build\`.
+if it is not on your path. x64 output goes to `Build\`; the ARM64EC configurations write to `ControlR\ARM64EC\<Configuration>\` instead.
 
 The console is built separately with yarn, from `Console/`:
 
