@@ -81,6 +81,9 @@ Requirements (Runtime)
 Requirements (Building)
 -----------------------
 
+The notes below describe the original 2018 setup. For the current build,
+including how the R version is chosen, see [docs/BUILDING.md](docs/BUILDING.md).
+
 There are several third party tools and libraries used to build BERT:
 
  * Protocol Buffers
