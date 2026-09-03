@@ -28,6 +28,8 @@
 
 #include "excel_api_functions.h"
 
+#include <fstream>
+
 void resetXlOper(LPXLOPER12 x)
 {
   if (x->xltype == (xltypeStr | xlbitDLLFree) && x->val.str)
@@ -80,6 +82,82 @@ void UnregisterFunctions(const std::string &language) {
       entry->register_id_ = 0;
     }
   }
+}
+
+/** escapes the five characters xml reserves, for use in an attribute */
+std::string XMLEscape(const std::string &text) {
+  std::string escaped;
+  for (auto c : text) {
+    switch (c) {
+    case '&': escaped.append("&amp;"); break;
+    case '<': escaped.append("&lt;"); break;
+    case '>': escaped.append("&gt;"); break;
+    case '"': escaped.append("&quot;"); break;
+    case '\'': escaped.append("&apos;"); break;
+    default: escaped.push_back(c);
+    }
+  }
+  return escaped;
+}
+
+/**
+ * writes the registered functions, with their descriptions, in the format
+ * the Excel-DNA IntelliSense add-in reads. that add-in shows the argument
+ * tooltip Excel itself only provides for its own functions; excel gives an
+ * add-in no way to do it. this file is what BERT contributes; see
+ * docs/FUNCTION-HELP.md for how the two are connected.
+ *
+ * this costs nothing when the IntelliSense add-in is not installed, so it
+ * is written whenever functions are registered.
+ */
+void WriteIntelliSenseFile() {
+
+  BERT *bert = BERT::Instance();
+  std::string path = bert->home_directory();
+  path.append(INTELLISENSE_FILE_NAME);
+
+  std::ofstream file(path, std::ios::binary | std::ios::trunc);
+  if (!file.good()) {
+    DebugOut("could not write %s\n", path.c_str());
+    return;
+  }
+
+  file << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n";
+  file << "<!-- written by BERT when it registers functions; edits will be lost -->\r\n";
+  file << "<IntelliSense xmlns=\"http://schemas.excel-dna.net/intellisense/1.0\">\r\n";
+  file << "  <FunctionInfo>\r\n";
+
+  for (auto entry : bert->function_list_) {
+
+    auto language_service = bert->GetLanguageService(entry->language_key_);
+    if (!language_service) continue;
+
+    // the name excel knows the function by, which is what the tooltip has
+    // to match: the language prefix, then the alias if there is one
+
+    std::string name = language_service->prefix();
+    name.append(".");
+    name.append(entry->alias_.length() ? entry->alias_ : entry->name_);
+
+    file << "    <Function Name=\"" << XMLEscape(name)
+         << "\" Description=\"" << XMLEscape(entry->description_) << "\">\r\n";
+
+    for (auto argument : entry->arguments_) {
+      std::string description = argument->description_;
+      if (!description.length() && argument->default_value_.length()) {
+        description = "Default ";
+        description.append(argument->default_value_);
+      }
+      file << "      <Argument Name=\"" << XMLEscape(argument->name_)
+           << "\" Description=\"" << XMLEscape(description) << "\" />\r\n";
+    }
+
+    file << "    </Function>\r\n";
+  }
+
+  file << "  </FunctionInfo>\r\n";
+  file << "</IntelliSense>\r\n";
+
 }
 
 void RegisterFunctions() {
@@ -181,6 +259,9 @@ void RegisterFunctions() {
 
   Excel12(xlFree, 0, 1, xlParm[0]);
   for (int i = 0; i < 32; i++) delete xlParm[i];
+
+  WriteIntelliSenseFile();
+
 }
 
 bool ExcelRegisterLanguageCalls(const char *language_name, uint32_t language_key, bool generic) {

@@ -88,6 +88,9 @@ if (-not $SkipConsole) {
 $files = "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe",
          "bert-config-template.json", "user-stylesheet-template.less", "Welcome.md", "bert2.ico"
 
+# shipped from this directory rather than from Build
+$installer_files = "BERT-IntelliSense.xlam"
+
 # the binaries must not need the Visual C++ redistributable: everything is
 # linked against the static runtime, protobuf included (x64-windows-static)
 foreach ($f in "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe") {
@@ -124,6 +127,7 @@ if (-not $SkipZip) {
   if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
   New-Item -ItemType Directory $stage | Out-Null
   foreach ($f in $files) { Copy-Item (Join-Path $build $f) $stage }
+  foreach ($f in $installer_files) { Copy-Item (Join-Path $here $f) $stage }
   foreach ($d in $dirs) { Copy-Item (Join-Path $build $d) (Join-Path $stage $d) -Recurse }
   # the languages file with no R filled in: the zip relies on BERT.R.home
   (Get-Content (Join-Path $here "bert-languages.template.json") -Raw).Replace('"@R_HOME@"', '""') |

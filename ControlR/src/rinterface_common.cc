@@ -823,6 +823,14 @@ BERTBuffers::CallResponse& ListScriptFunctions(BERTBuffers::CallResponse &respon
                       descriptions.push_back(description.str());
                     }
                   }
+                  else if (attribute.value_case() == BERTBuffers::Variable::ValueCase::kStr) {
+
+                    // a character vector of length one crosses as a scalar
+                    // rather than an array, so a function described without
+                    // any argument help was dropped here
+
+                    descriptions.push_back(attribute.str());
+                  }
                 }
                 else if (attribute.name() == "category") {
                   descriptor->set_category(attribute.str());

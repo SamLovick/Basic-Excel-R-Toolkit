@@ -246,6 +246,12 @@ CheckExcelRunning:
   File ..\Build\Welcome.md
   File "bert2.ico"
 
+  ; an empty add-in that lets the Excel-DNA IntelliSense add-in find the
+  ; function descriptions BERT writes; loading it is optional, and nothing
+  ; else depends on it. see docs/FUNCTION-HELP.md
+
+  File "BERT-IntelliSense.xlam"
+
   ; bundled R from installers before 2.4 (2.4 bundled R-3.5.0, which stays
   ; as a fallback for anyone who has not installed R themselves)
   RMDir /r "$INSTDIR\R-3.4.1"
@@ -304,6 +310,8 @@ UninstallCheckExcelRunning:
   Delete "$INSTDIR\user-stylesheet-template.less"
   Delete "$INSTDIR\bert-languages.json"
   Delete "$INSTDIR\bert-languages.template.json"
+  Delete "$INSTDIR\BERT-IntelliSense.xlam"
+  Delete "$INSTDIR\BERT-IntelliSense.intellisense.xml"
   Delete "$INSTDIR\Welcome.md"
   Delete "$INSTDIR\bert2.ico"
   Delete "$INSTDIR\Uninstall.exe"

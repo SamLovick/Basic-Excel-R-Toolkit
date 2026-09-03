@@ -16,9 +16,9 @@ bar). Close Excel, then:
    ones from this zip in their place.
 2. Copy these files over the existing ones: `BERT64.xll`,
    `BERTRibbon2x64.dll`, `ControlR.exe`, `Welcome.md`,
-   `bert-config-template.json`, `user-stylesheet-template.less`. If an
-   earlier build left `libprotobuf.dll` and `abseil_dll.dll` there, delete
-   them; they are no longer used.
+   `bert-config-template.json`, `user-stylesheet-template.less`,
+   `BERT-IntelliSense.xlam`. If an earlier build left `libprotobuf.dll` and
+   `abseil_dll.dll` there, delete them; they are no longer used.
 3. Do not copy `bert-languages.json` over yours unless you want the copy in
    this zip, which has no R location in it.
 4. Tell BERT where your R is, in `bert-config.json` (the installer would

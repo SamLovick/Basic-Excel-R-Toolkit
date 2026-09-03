@@ -38,6 +38,14 @@
 #define CONFIG_FILE_NAME "bert-config.json"
 #define LANGUAGE_CONFIG_FILE_NAME "bert-languages.json"
 
+/**
+ * function descriptions, in the format the Excel-DNA IntelliSense add-in
+ * reads. the name pairs with the carrier add-in BERT-IntelliSense.xlam:
+ * that add-in does nothing except give the IntelliSense add-in something
+ * to find this file beside. see docs/FUNCTION-HELP.md.
+ */
+#define INTELLISENSE_FILE_NAME "BERT-IntelliSense.intellisense.xml"
+
 class BERT {
 
 private:
@@ -175,6 +183,11 @@ public:
 
   /** handles callback functions from R */
   void HandleCallback(const std::string &language);
+
+public:
+
+  /** the directory this dll is in, which is also where the config lives */
+  const std::string& home_directory() const { return home_directory_; }
 
 public:
 
