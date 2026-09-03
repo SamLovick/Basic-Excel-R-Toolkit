@@ -214,6 +214,9 @@ public:
    */
   void ShowConsole();
 
+  /** true if the console process we started is still running */
+  bool ConsoleProcessRunning();
+
   /**
    * hides the console, without actually closing the process
    */

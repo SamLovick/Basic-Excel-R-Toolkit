@@ -171,35 +171,21 @@ BOOL CALLBACK BERT::ShowConsoleWindowCallback(HWND hwnd, LPARAM lParam)
       GetWindowTextA(hwnd, buffer, 256);
       DebugOut("WINDOW %X: %s\n", pid, buffer);
 
-      long style = GetWindowLong(hwnd, GWL_STYLE);
-      long exstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-      DebugOut("PRE: 0x%X, 0x%X\n", style, exstyle);
+      // show or hide the window, and nothing else. this used to rewrite the
+      // window styles as well, moving the console between an application
+      // window and a tool window and setting the visible bit by hand. that
+      // leaves the window out of step with what chromium believes about it,
+      // and the console came back from a hide with a blank client area that
+      // took no input. a hidden window has no taskbar button anyway, which
+      // is what the style changes were for.
 
       if (show) {
-        style |= WS_VISIBLE;
-        exstyle |= WS_EX_APPWINDOW;
-        exstyle &= ~(WS_EX_TOOLWINDOW);
-      }
-      else {
-        style &= ~(WS_VISIBLE);
-        exstyle |= WS_EX_TOOLWINDOW;
-        exstyle &= ~(WS_EX_APPWINDOW);
-      }
-
-      ShowWindow(hwnd, SW_HIDE);
-
-      SetWindowLong(hwnd, GWL_EXSTYLE, exstyle);
-      SetWindowLong(hwnd, GWL_STYLE, style);
-
-      if (show) {
-        if (IsIconic(hwnd)) ShowWindow(hwnd, SW_RESTORE);
-        ShowWindow(hwnd, SW_SHOW);
+        ShowWindow(hwnd, IsIconic(hwnd) ? SW_RESTORE : SW_SHOW);
         SetForegroundWindow(hwnd);
       }
-
-      style = GetWindowLong(hwnd, GWL_STYLE);
-      exstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-      DebugOut("POST: 0x%X, 0x%X\n", style, exstyle);
+      else {
+        ShowWindow(hwnd, SW_HIDE);
+      }
 
     }
   }
@@ -242,11 +228,31 @@ void BERT::HideConsole() {
   EnumWindows(BERT::FocusExcelWindowCallback, (LPARAM)pid);
 }
 
+/** true if the console we started is still running */
+bool BERT::ConsoleProcessRunning() {
+
+  if (!console_process_id_) return false;
+
+  HANDLE handle = OpenProcess(SYNCHRONIZE, FALSE, console_process_id_);
+  if (!handle) return false;
+
+  bool running = (WAIT_TIMEOUT == WaitForSingleObject(handle, 0));
+  CloseHandle(handle);
+
+  return running;
+}
+
 void BERT::ShowConsole() {
-  if (console_process_id_) {
+
+  // the console hides itself rather than closing, so normally it is still
+  // there and only needs showing. if it has gone, start it again: the id
+  // was never cleared, so this used to do nothing at all.
+
+  if (ConsoleProcessRunning()) {
     EnumWindows(BERT::ShowConsoleWindowCallback, true);
   }
   else {
+    console_process_id_ = 0;
     StartConsoleProcess();
   }
 }
