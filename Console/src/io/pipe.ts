@@ -460,7 +460,7 @@ export class Pipe {
   }
 
   RegisterConsoleMessages(){
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       // register for console messages
       console.info("calling console");
       this.Control("console").then(() => {
@@ -476,7 +476,7 @@ export class Pipe {
     opts = opts || {};
     this.pipe_name_ = opts.pipe_name || "";
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       console.info("Connecting...");
 
       let client = net.createConnection({ path: "\\\\.\\pipe\\" + this.pipe_name_ }, () => {

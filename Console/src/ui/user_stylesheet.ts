@@ -17,7 +17,7 @@
  * along with BERT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import * as less from 'less';
+import less from 'less';
 import * as path from 'path';
 import * as fs from 'fs';
 import { FileWatcher } from '../common/file_watcher'; 
@@ -57,7 +57,7 @@ export class UserStylesheet {
   }
 
   static Load(){
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       fs.readFile(this.stylesheet_path_, "utf8", (err, data) => {
         if(err){
           return reject("user stylesheet not found");

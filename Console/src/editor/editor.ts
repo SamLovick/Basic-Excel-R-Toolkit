@@ -24,11 +24,12 @@ import * as fs from 'fs';
 import * as Rx from 'rxjs';
 import { EEXIST } from 'constants';
 
-import * as MarkdownIt from 'markdown-it';
-import * as MarkdownItTasks from 'markdown-it-task-lists';
+import MarkdownIt from 'markdown-it';
+import MarkdownItTasks from 'markdown-it-task-lists';
 const MD = new MarkdownIt().use(MarkdownItTasks); 
 
-import { remote, clipboard, shell as electron_shell } from 'electron';
+import { clipboard, shell as electron_shell } from 'electron';
+import * as remote from '@electron/remote';
 const { Menu, MenuItem, dialog } = remote;
 
 const Constants = require("../../data/constants.json");
@@ -129,17 +130,30 @@ export class Editor {
 
     if (this.loaded_) return Promise.resolve();
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
 
       this.loaded_ = true;
 
-      // see monaco electron sample for this
+      // index.html loads the AMD loader in a script tag after the console's
+      // own code, so it is not there yet if we got here from a promise that
+      // resolved during startup. wait for the page to finish parsing.
+
+      if (typeof amd_require === "undefined") {
+        if (document.readyState !== "loading") {
+          return reject(new Error("monaco loader not found"));
+        }
+        await new Promise<void>(r => document.addEventListener("DOMContentLoaded", () => r(), { once: true }));
+      }
+
+      // see the monaco electron-amd sample for this. hiding node's module
+      // global is the sample's workaround for language contributions that
+      // otherwise mistake the environment.
 
       amd_require.config({
         baseUrl: Editor.UriFromPath(path.join(__dirname, '../../node_modules/monaco-editor/min'))
       });
       self['module'] = undefined;
-      self['process'].browser = true;
+      self['process']['browser'] = true;
 
       // this is async
       amd_require(['vs/editor/editor.main'], () => {
@@ -489,7 +503,7 @@ export class Editor {
    * ensure that we have loaded config (or initial defaults)
    */
   private EnsureConfig() : Promise<any> {
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       ConfigManager.filter(x => x.config).first().subscribe(config => {
         this.editor_options_ = config['editor'] || {};
         resolve();
@@ -554,7 +568,7 @@ export class Editor {
         }
       });
 
-      menu.popup(remote.getCurrentWindow());
+      menu.popup({ window: remote.getCurrentWindow() });
 
     });
 
@@ -576,7 +590,7 @@ export class Editor {
     // why are we including json schema schema? is that just because
     // I was editing the schema in the editor? (...)
 
-    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+    monaco.json.jsonDefaults.setDiagnosticsOptions({
       validate: true, allowComments: true,
       schemas: [{
         uri: "http://bert-toolkit.com/config-schema",
@@ -939,11 +953,19 @@ export class Editor {
 
         // fixme: parameterize defaults?
 
-        await this.OpenFileInternal(path.join(functions_path, "..", "examples", "excel-scripting.r"), {
-          type:DocumentType.editor, suppress_error:true });
+        // suppress_error only suppresses the dialog; a missing file still
+        // rejects, and neither of these is essential.
 
-        await this.OpenFileInternal(path.join(functions_path, "functions.r"), {
-          type:DocumentType.editor, suppress_error:true });
+        for (const file_path of [
+            path.join(functions_path, "..", "examples", "excel-scripting.r"),
+            path.join(functions_path, "functions.r")]) {
+          try {
+            await this.OpenFileInternal(file_path, { type:DocumentType.editor, suppress_error:true });
+          }
+          catch(e) {
+            console.warn("default file not opened: " + file_path);
+          }
+        }
             
       }
 
@@ -1193,7 +1215,7 @@ export class Editor {
     
     // this is just aesthetic? whose aesthetic?
 
-    let language = document.model_['_languageIdentifier'].language;
+    let language = document.model_.getLanguageId();
     switch (language.toLowerCase()) {
       case "json":
       case "js":
@@ -1266,7 +1288,7 @@ export class Editor {
 
     if(save_as_dialog) {
 
-      file_path = remote.dialog.showSaveDialog({
+      file_path = remote.dialog.showSaveDialogSync({
         defaultPath: document.file_path_ || document.label_
       });
 
@@ -1342,7 +1364,7 @@ export class Editor {
    */
   public RevertFile() { 
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
 
       let tab = this.active_tab_;
       let document = tab.data as Document;
@@ -1408,7 +1430,7 @@ export class Editor {
 
   /** shows a fnf alert. FIXME: use our alerts? */
   private OpenFileError(){
-    remote.dialog.showMessageBox({
+    remote.dialog.showMessageBoxSync({
       type: "info", 
       icon: null,
       message: Constants.errors.openFileError
@@ -1444,7 +1466,7 @@ export class Editor {
 
     // not found, open
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
 
       fs.readFile(file_path, "utf8", (err, data) => {
 
@@ -1500,7 +1522,7 @@ export class Editor {
    */
   public OpenFile(file_path?: string) {
     if (file_path) return this.OpenFileInternal(file_path);
-    let files = remote.dialog.showOpenDialog({
+    let files = remote.dialog.showOpenDialogSync({
       properties: ["openFile"]
     });
     if (files && files.length) return this.OpenFileInternal(files[0]);

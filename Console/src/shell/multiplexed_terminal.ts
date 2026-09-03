@@ -23,7 +23,7 @@ import { TerminalState } from './terminal_state';
 import { LanguageInterface } from './language_interface';
 import { ConfigManagerInstance as ConfigManager, ConfigLoadStatus } from '../common/config_manager';
 
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 import * as Rx from 'rxjs';
 
 const {Menu, MenuItem} = remote;

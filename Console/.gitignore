@@ -3,5 +3,3 @@ build
 dist
 test
 
-# this project uses yarn; a stray npm lockfile causes divergent installs
-package-lock.json

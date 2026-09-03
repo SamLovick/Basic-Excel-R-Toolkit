@@ -18,7 +18,8 @@
  */
 
 import {Pipe, ConsoleMessage, ConsoleMessageType} from './io/pipe';
-import {clipboard, remote, dialog, shell as electron_shell} from 'electron';
+import {clipboard, shell as electron_shell} from 'electron';
+import * as remote from '@electron/remote';
 
 const {Menu, MenuItem} = remote;
 
@@ -184,7 +185,7 @@ ConfigManager.filter(x => x.config).first().subscribe(x => {
   // delay? UX)
 
   Promise.all(pipe_list.map(pipe_name => {
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         if(pipe_name){
           let pipe = new Pipe();
           let language = "unknown"; // just for reporting
@@ -302,7 +303,7 @@ MenuUtilities.events.subscribe(event => {
     remote.getCurrentWindow().reload();
     break;
   case "main.view.toggle-developer-tools":
-    remote.getCurrentWindow()['toggleDevTools']();
+    remote.getCurrentWindow().webContents.toggleDevTools();
     break;
 
   // layout

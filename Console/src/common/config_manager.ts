@@ -104,7 +104,7 @@ class ConfigManager extends Rx.BehaviorSubject<ConfigState> {
    * 
    */
   private ReadConfig() : Promise<any> {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       fs.readFile(this.config_path, "utf8", (err, json) => {
         if(!err){
           this.raw_config_file_ = json;

@@ -48,7 +48,7 @@ const Constants = require("../../data/constants.json");
 import * as Rx from 'rxjs';
 
 // for save image dialog
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 
 import * as fs from 'fs';
 
@@ -600,7 +600,7 @@ export class TerminalImplementation {
     }
 
     if(src){
-      let file_name = remote.dialog.showSaveDialog({
+      let file_name = remote.dialog.showSaveDialogSync({
         filters: [
           { name:  Constants.shell.imageTypes.replace(/#/, image_type.toUpperCase()), extensions: [image_type] } 
         ]
@@ -748,11 +748,13 @@ export class TerminalImplementation {
   /**
    * 
    */
-  Paste(text?: string) {
+  async Paste(text?: string) {
 
     this.xterm_.scrollToBottom();
-    
-    if (!text) text = (clipboard.readText() || "");
+
+    // electron's clipboard.readText is asynchronous now, like the
+    // navigator.clipboard API it follows
+    if (!text) text = ((await clipboard.readText()) || "");
 
     // FIXME: cursor pos [meaning what?]
 

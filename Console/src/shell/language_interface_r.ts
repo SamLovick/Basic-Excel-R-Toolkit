@@ -178,7 +178,7 @@ export class RInterface extends LanguageInterface {
       let html_blob = await html_list.blob();
       let reader = new FileReader();
 
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         reader.onloadend = () => {
           resolve();
         }
@@ -188,7 +188,7 @@ export class RInterface extends LanguageInterface {
         reader.readAsText(html_blob);
       });
 
-      let html = reader.result;
+      let html = reader.result as string;
       let regex = /<tr>[\s\S]*?<td>[\s\S]*?<a.*?>(.*?)<\/a>[\s\S]*?<\/td>[\s\S]*?<td>([\s\S]*?)<\/td>/g;
       let match;
       
