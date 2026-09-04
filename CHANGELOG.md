@@ -9,12 +9,58 @@ of changes is offered back as pull request
 Newest first. The console shows this file under Help ▸ Release Notes, and
 opens it by itself the first time you run a new version.
 
-**Supported R: 3.5 through 4.6**, built and tested against 4.5.2 and 4.6.1.
-Graphics is the exception: `BERTModule` is compiled against R's graphics
-engine, whose version changes between R series, so the install ships one
-module per series and uses the one matching your R. Modules ship for **R 4.5
-and 4.6**; on any other version everything works except drawing, and the
-console says so at startup.
+## Which R versions this works with
+
+The short version: **R 4.5 and 4.6 get everything. Older R gets less**, and
+what you lose depends on how old.
+
+| Your R | Functions in cells | Console | Excel references | Graphics | Function help |
+| --- | --- | --- | --- | --- | --- |
+| 4.6.x | yes | yes | yes | **yes** | yes |
+| 4.5.x | yes | yes | yes | **yes** | yes |
+| 4.4.x | yes | yes | yes | no | yes |
+| 4.3.x | yes | yes | yes | no | yes |
+| 4.2.x | yes | yes | yes | no | yes |
+| 3.5 to 4.1 | yes | yes | **no** | no | yes |
+
+Tested in Excel on 4.6.1, 4.5.2, 4.2.2 and 3.5.0. 4.3 and 4.4 are not tested
+directly; they behave as 4.2 does, for the reason below.
+
+### Why it varies
+
+One `ControlR.exe` hosts every version of R from 3.5 up, so cell functions,
+the console and function help work throughout. The part that does not travel
+is `BERTModule`, a compiled R package that provides the graphics devices, the
+`xlReference` class used for Excel references, and a few helpers.
+
+R checks a module's **graphics engine version** whenever a graphics device is
+created, and that version changes between R series -- 4.2 is `R_GE_group`,
+4.5 is `R_GE_glyphs`, 4.6 is `R_GE_fontVar`. A module built for one series
+therefore cannot draw on another: it fails with "Graphics API version
+mismatch". This release ships modules for 4.5 and 4.6, so those two draw.
+
+A module from a *nearby* series still loads, though, which is why 4.2 through
+4.4 keep Excel references and the helpers and lose only drawing. R 3.5 is far
+enough back that a module built for 4.5 will not load into it at all, so
+references go too, and `BERT$.Excel(...)` fails with *cannot get a slot
+("virtual") from an object of type "NULL"*.
+
+The console says at startup when graphics will not be available, and why,
+rather than leaving it to be discovered when a plot returns an error.
+
+### What would widen it
+
+Nothing in the design: `startup.R` already picks the module matching the R it
+is hosted in, and a module is about 175 KB, so shipping one per series costs
+nothing worth counting. The limit is purely that each series has to be
+*built*, and each needs its own R installation and its matching Rtools on the
+build machine. Modules for 4.2, 4.3 and 4.4 are buildable; 3.5 needs a
+toolchain old enough that it may no longer be practical.
+
+**Separate releases per R version would not help.** The only thing that
+differs is which 175 KB module is in the box, the selection is automatic, and
+a user who upgrades R would need a different download. The work is in
+building the modules, not in packaging them.
 
 ## 2.4.3-r10
 
