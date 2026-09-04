@@ -77,12 +77,12 @@ if (-not $SkipModule) {
   if (Test-Path $root_lib) { Remove-Item $root_lib -Recurse -Force }
   New-Item -ItemType Directory $root_lib | Out-Null
 
-  foreach ($home in $homes) {
+  foreach ($r_home in $homes) {
 
-    if (-not (Test-Path "$home\bin\x64\R.exe")) { Fail "no 64-bit R at $home" }
+    if (-not (Test-Path "$r_home\bin\x64\R.exe")) { Fail "no 64-bit R at $r_home" }
 
-    $series = & "$home\bin\x64\Rscript.exe" --vanilla -e "cat(paste0(R.version`$major, '.', strsplit(R.version`$minor, '.', fixed=TRUE)[[1]][1]))"
-    Step "BERTModule for R $series (R CMD INSTALL with $home)"
+    $series = & "$r_home\bin\x64\Rscript.exe" --vanilla -e "cat(paste0(R.version`$major, '.', strsplit(R.version`$minor, '.', fixed=TRUE)[[1]][1]))"
+    Step "BERTModule for R $series (R CMD INSTALL with $r_home)"
 
     # object files must not be carried between R versions: R CMD INSTALL will
     # happily relink a module from objects compiled against another R's
@@ -95,7 +95,7 @@ if (-not $SkipModule) {
 
     $lib = Join-Path $root_lib $series
     New-Item -ItemType Directory $lib | Out-Null
-    & "$home\bin\x64\R.exe" CMD INSTALL --library="$lib" --no-multiarch (Join-Path $root "Module")
+    & "$r_home\bin\x64\R.exe" CMD INSTALL --library="$lib" --no-multiarch (Join-Path $root "Module")
     if ($LASTEXITCODE) { Fail "module build failed for R $series" }
 
     $built = (Select-String -Path (Join-Path $lib "BERTModule\DESCRIPTION") -Pattern "^Built:").Line
