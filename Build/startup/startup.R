@@ -351,6 +351,9 @@ library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
   #
   # update: now delegating file completion to C (probably more to come).
   #
+  # the most completions to offer at once; see where this is applied below
+  .completion.limit <- 500;
+
   .CustomCompleterImpl <- function(.CompletionEnv){
 
     .fqFunc <- function (line, cursor=-1) 
@@ -497,6 +500,15 @@ library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
           comps <- paste0(prefix, comps)
       }
       comps <- c(fargComps, comps)
+
+      # a token that matches thousands of symbols is no use as a list, and the
+      # answer has to cross a pipe: keep it to something a person can read,
+      # and the shell responsive
+
+      if (length(comps) > .completion.limit) {
+        comps <- comps[seq_len(.completion.limit)];
+      }
+
       .CompletionEnv[["comps"]] <- comps
         }
   };
