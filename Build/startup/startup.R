@@ -21,9 +21,68 @@
 #
 # load module. moved from code.
 #
+# BERTModule carries compiled code that registers the graphics devices, and R
+# checks its graphics engine version whenever a device is created. That
+# version changes between R series -- 4.2 is R_GE_group, 4.5 is R_GE_glyphs,
+# 4.6 is R_GE_fontVar -- so a module built against one series cannot draw on
+# another: it fails with "Graphics API version mismatch". The install ships
+# one module per series in module/<major>.<minor>; load the one that matches
+# the R we are hosted in. The flat module/ directory is the older layout and
+# is kept as a fallback.
+#
+# If there is no module for this R, say so and carry on: functions and the
+# console work without it, only graphics does not.
+#
 #===============================================================================
 
-library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
+local({
+
+  home <- Sys.getenv("BERT_HOME");
+  series <- paste0(R.version$major, ".", strsplit(R.version$minor, ".", fixed=TRUE)[[1]][1]);
+
+  # the matching module first, then the older flat layout, then any other
+  # series we happen to ship, newest first. a module built for a different
+  # series still loads and still provides the xlReference class and the
+  # helpers -- only drawing fails, and it fails with R's own "Graphics API
+  # version mismatch" when a device is created. that is worth having.
+
+  others <- character(0);
+  module.root <- paste0(home, "module");
+  if (dir.exists(module.root)) {
+    dirs <- list.dirs(module.root, full.names=FALSE, recursive=FALSE);
+    dirs <- dirs[grepl("^[0-9]+[.][0-9]+$", dirs)];
+    if (length(dirs)) {
+      dirs <- dirs[order(numeric_version(dirs), decreasing=TRUE)];
+      others <- file.path(module.root, dirs);
+    }
+  }
+
+  loaded <- FALSE;
+  matched <- FALSE;
+
+  for (lib in unique(c(file.path(module.root, series), module.root, others))) {
+    if (!loaded && dir.exists(file.path(lib, "BERTModule"))) {
+      loaded <- tryCatch({
+        library(BERTModule, lib.loc=lib);
+        matched <- identical(basename(lib), series);
+        TRUE;
+      }, error = function(e) {
+        cat("BERT: BERTModule in", lib, "would not load:", conditionMessage(e), "\n");
+        FALSE;
+      });
+    }
+  }
+
+  if (!loaded) {
+    cat("BERT: no BERTModule could be loaded. R functions and the console will",
+        "work; graphics and Excel references will not.\n");
+  }
+  else if (!matched) {
+    cat("BERT: no BERTModule built for R ", series,
+        "; graphics will not work on this version of R, though everything else will.\n", sep="");
+  }
+
+})
 
 #===============================================================================
 #

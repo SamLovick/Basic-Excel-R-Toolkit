@@ -34,11 +34,20 @@ original 2018 setup and is kept for reference.
   and abseil are linked into the binaries: like the rest of the build they
   use the static C runtime, and the shipped files need no Visual C++
   redistributable on the target machine.
-* An R installation. The tree is currently built against R 4.5.2, and R 4.5
-  is the newest series it supports; see "The R installation" below. R 4.6 is
-  not supported: it removed `Rf_isFrame` and changed the ReadConsole callback
-  signature, so `ControlR` does not compile against its headers. The runtime
-  gate warns when it is given anything newer than 4.5.
+* An R installation. The tree is built against R 4.5.2 and runs against 4.6
+  as well; see "The R installation" below. The runtime gate warns when it is
+  given anything newer than 4.6.
+
+* One R installation per module series, with the matching Rtools, if you are
+  building a release. `BERTModule` is compiled against R's graphics engine,
+  whose version changes between R series (4.2 is `R_GE_group`, 4.5 is
+  `R_GE_glyphs`, 4.6 is `R_GE_fontVar`), so a module built for one series
+  cannot draw on another: it fails `R_GE_checkVersionOrDie` at run time with
+  "Graphics API version mismatch". `build-release.ps1 -ModuleRHomes` takes
+  the list of R installations to build modules against, one per series, and
+  they are shipped in `module/<major>.<minor>`. Note that R CMD INSTALL will
+  relink from stale object files in `Module/src`, so they are cleaned between
+  builds -- that is what makes a module look built for the wrong R.
 * The Excel SDK, for the add-in project only.
 * Node and yarn, for the console only.
 * NSIS, for the installer only.

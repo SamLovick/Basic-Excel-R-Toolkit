@@ -624,7 +624,12 @@ void SEXPToVariable(BERTBuffers::Variable *var, SEXP sexp, std::vector <SEXP> en
     int ncol = 1;
     BERTBuffers::Array *arr = 0;
         
-    if (Rf_isFrame(sexp) && rtype == VECSXP) {
+    // Rf_isFrame was removed in R 4.6, which suggests Rf_isDataFrame -- but
+    // that only arrived in 4.5, and this has to build against 3.5 as well.
+    // Rf_inherits is stable API across all of them, does the same job, and
+    // is what the rest of this file already uses.
+
+    if (Rf_inherits(sexp, "data.frame") && rtype == VECSXP) {
 
       // this is a list of lists; we want to flatten it and we don't want nested 
       // arrays. for this one, columns is the number of entries in the outer 

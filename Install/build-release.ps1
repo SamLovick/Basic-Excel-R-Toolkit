@@ -15,6 +15,12 @@ Param(
   [string]$Version = "",
   [string]$RHome = "",
   [string]$MakeNsis = "makensis",
+  # BERTModule is compiled against R's graphics engine, whose version changes
+  # between R series, so one module per series is built and shipped. Give the
+  # R installations to build against; the default is the R used for the rest
+  # of the build. Each needs the matching Rtools on the PATH.
+  [string[]]$ModuleRHomes,
+
   [switch]$SkipNative,
   [switch]$SkipModule,
   [switch]$SkipConsole,
@@ -65,12 +71,36 @@ if (-not $SkipNative) {
 
 # ---- R module --------------------------------------------------------------
 if (-not $SkipModule) {
-  Step "BERTModule (R CMD INSTALL with $RHome)"
-  $lib = Join-Path $build "module"
-  if (Test-Path $lib) { Remove-Item $lib -Recurse -Force }
-  New-Item -ItemType Directory $lib | Out-Null
-  & "$RHome\bin\x64\R.exe" CMD INSTALL --library="$lib" --no-multiarch (Join-Path $root "Module")
-  if ($LASTEXITCODE) { Fail "module build failed" }
+
+  $homes = if ($ModuleRHomes) { $ModuleRHomes } else { @($RHome) }
+  $root_lib = Join-Path $build "module"
+  if (Test-Path $root_lib) { Remove-Item $root_lib -Recurse -Force }
+  New-Item -ItemType Directory $root_lib | Out-Null
+
+  foreach ($home in $homes) {
+
+    if (-not (Test-Path "$home\bin\x64\R.exe")) { Fail "no 64-bit R at $home" }
+
+    $series = & "$home\bin\x64\Rscript.exe" --vanilla -e "cat(paste0(R.version`$major, '.', strsplit(R.version`$minor, '.', fixed=TRUE)[[1]][1]))"
+    Step "BERTModule for R $series (R CMD INSTALL with $home)"
+
+    # object files must not be carried between R versions: R CMD INSTALL will
+    # happily relink a module from objects compiled against another R's
+    # headers, and the result fails R_GE_checkVersionOrDie at run time with
+    # "Graphics API version mismatch" -- which looks like a code fault and is
+    # not one.
+
+    Get-ChildItem (Join-Path $root "Module\src") -Include *.o, *.dll -Recurse -ErrorAction SilentlyContinue |
+      Remove-Item -Force -ErrorAction SilentlyContinue
+
+    $lib = Join-Path $root_lib $series
+    New-Item -ItemType Directory $lib | Out-Null
+    & "$home\bin\x64\R.exe" CMD INSTALL --library="$lib" --no-multiarch (Join-Path $root "Module")
+    if ($LASTEXITCODE) { Fail "module build failed for R $series" }
+
+    $built = (Select-String -Path (Join-Path $lib "BERTModule\DESCRIPTION") -Pattern "^Built:").Line
+    Write-Host "  $series -> $built"
+  }
 }
 
 # ---- console ---------------------------------------------------------------

@@ -9,10 +9,50 @@ of changes is offered back as pull request
 Newest first. The console shows this file under Help ▸ Release Notes, and
 opens it by itself the first time you run a new version.
 
-**Supported R: 3.5 through 4.5**, built and tested against 4.5.2. R 4.6 is not
-supported yet -- it removed `Rf_isFrame` and changed the ReadConsole callback
-signature, so the controller does not compile against it. The controller warns
-at startup when it is given anything newer than 4.5.
+**Supported R: 3.5 through 4.6**, built and tested against 4.5.2 and 4.6.1.
+Graphics is the exception: `BERTModule` is compiled against R's graphics
+engine, whose version changes between R series, so the install ships one
+module per series and uses the one matching your R. Modules ship for **R 4.5
+and 4.6**; on any other version everything works except drawing, and the
+console says so at startup.
+
+## 2.4.3-r10
+
+### R 4.6 works
+
+`Rf_isFrame` was removed in R 4.6; the one place that used it now calls
+`Rf_inherits(sexp, "data.frame")`, which does the same job and has been
+stable API since long before 3.5. That was the only source change 4.6 needed:
+the controller compiles against 4.6's headers, links against the existing
+import libraries, and runs.
+
+### Graphics now works on more than one R series
+
+`BERTModule` carries the graphics devices, and R checks its graphics engine
+version whenever a device is created. That version changes between R series
+-- 4.2 is `R_GE_group`, 4.5 is `R_GE_glyphs`, 4.6 is `R_GE_fontVar` -- so a
+module built for one series cannot draw on another. It fails with "Graphics
+API version mismatch".
+
+Until now one module was built and shipped, so **graphics only ever worked on
+the series it happened to be built against**: r9 shipped a 4.5 module, and
+plotting from a cell failed on R 4.2 exactly as it did on 4.6. That was not
+noticed because the build machine runs 4.5.
+
+The install now ships one module per series in `module/<major>.<minor>` and
+loads the one matching your R, falling back to any other module when there is
+no match -- a module from another series still provides the `xlReference`
+class and the helpers, so everything except drawing keeps working. Modules
+ship for R 4.5 and 4.6. The console says at startup when graphics will not be
+available and why.
+
+### Elsewhere
+
+- The version gate accepts 4.6 without complaint, and warns above it.
+- `build-release.ps1 -ModuleRHomes` takes the R installations to build
+  modules against. It cleans `Module/src` between them: `R CMD INSTALL` will
+  otherwise relink from object files compiled against another R, producing a
+  module that claims to be built for one series and behaves as another.
 
 ## 2.4.3-r9
 
