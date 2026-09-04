@@ -1,13 +1,41 @@
 name: CI
 
-# What can and cannot be built here
+# What is built here, and what is not
 #
-# The console and the R-side checks run on every push. The add-in cannot:
-# XLCALL.H and XLCALL.CPP come from Microsoft's Excel XLL SDK and are
-# deliberately not in the repository (see BERT/.gitignore), so BERT64.xll
-# cannot be built from a clean checkout. The controller is built on demand
-# rather than on every push, because it has to build protobuf from source
-# through vcpkg; see the controlr job.
+# The console and the R-side checks run on every push. Neither native binary
+# is built, for different reasons.
+#
+# The add-in cannot be built at all: XLCALL.H and XLCALL.CPP come from
+# Microsoft's Excel XLL SDK and BERT/.gitignore deliberately keeps them out of
+# the repository, so BERT64.xll is not buildable from a clean checkout by
+# anyone, CI included.
+#
+# The controller can be built, but not yet here. It was tried, and the attempt
+# is worth recording because it found two real faults before it ran out of
+# road -- the vcpkg baseline was pinned for the add-in only, so a standalone
+# controller build resolved a protobuf incompatible with the checked-in
+# generated code; and R_ReadConsole carried R 3.5's signature and compiled
+# locally only because a header in the local R tree had been edited by hand.
+# Both are fixed.
+#
+# What the attempt needed, if anyone picks it up again:
+#
+#   r-lib/actions/setup-r@v2 with r-version 4.5.2  (not 'release': R 4.6
+#     removed Rf_isFrame and changed the ReadConsole callback signature)
+#   BertRHome pointed at that R, for its headers; the import libraries are
+#     checked in, so no .lib generation is needed
+#   vcpkg integrate install, because hosted runners ship vcpkg unintegrated
+#     and manifest mode otherwise restores nothing
+#   /p:PlatformToolset=v143, because the tree targets v145 (VS 2026) and
+#     hosted runners carry VS 2022
+#
+# Where it stops: the link fails with an unresolved __std_rotate out of
+# libprotobuf and abseil, which is a C runtime mismatch -- vcpkg resolves
+# protobuf:x64-windows (dynamic CRT) on the runner while the project links
+# the static CRT. Forcing /p:VcpkgTriplet=x64-windows-static is the obvious
+# next thing to try. It was not pursued: with the add-in unbuildable anyway,
+# a controller-only build earns less than the time it costs, and the native
+# build is exercised locally by Install/build-release.ps1 on every release.
 
 on:
   push:
@@ -65,70 +93,3 @@ jobs:
 
       - name: startup.R checks
         run: Rscript tests/startup-guard.R
-
-  controlr:
-    name: controlr (native, on demand)
-    # protobuf is built from source through vcpkg, which takes a while, so
-    # this runs when asked for rather than on every push
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          # the version the tree is built against, per docs/BUILDING.md.
-          # not 'release': R 4.6 removed Rf_isFrame and changed the
-          # ReadConsole callback signature, so the controller does not
-          # compile against it yet. that is work to do, not a broken build.
-          r-version: '4.5.2'
-
-      - name: point BertRHome at the runner's R
-        shell: pwsh
-        run: |
-          $home_dir = (Get-Command Rscript).Source | Split-Path | Split-Path | Split-Path
-          if (-not (Test-Path "$home_dir\include\R.h")) {
-            $home_dir = Rscript -e "cat(R.home())" | Out-String
-            $home_dir = $home_dir.Trim()
-          }
-          "R.home: $home_dir"
-          if (-not (Test-Path "$home_dir\include\R.h")) { throw "no R headers under $home_dir" }
-          "BERT_R_HOME=$home_dir" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - uses: microsoft/setup-msbuild@v2
-
-      - name: export the vcpkg binary cache location
-        shell: pwsh
-        run: "\"VCPKG_DEFAULT_BINARY_CACHE=$env:GITHUB_WORKSPACE\\vcpkg-cache\" | Out-File -FilePath $env:GITHUB_ENV -Append; New-Item -ItemType Directory -Force -Path \"$env:GITHUB_WORKSPACE\\vcpkg-cache\" | Out-Null"
-
-      - name: cache vcpkg packages
-        uses: actions/cache@v4
-        with:
-          path: vcpkg-cache
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('ControlR/vcpkg.json', 'BERT/vcpkg-configuration.json') }}
-          restore-keys: vcpkg-${{ runner.os }}-
-
-      - name: turn on vcpkg's msbuild integration
-        # the project uses vcpkg in manifest mode and gets its include paths
-        # from the integration; hosted runners ship vcpkg but not integrated,
-        # so the first build found no protobuf headers at all
-        shell: pwsh
-        run: |
-          $vcpkg = "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe"
-          if (-not (Test-Path $vcpkg)) { throw "no vcpkg on this runner" }
-          & $vcpkg version
-          & $vcpkg integrate install
-
-      - name: build ControlR
-        shell: pwsh
-        run: |
-          # hosted runners carry the v143 toolset; the tree targets v145
-          msbuild ControlR\ControlR.vcxproj `
-            /p:Configuration=Release /p:Platform=x64 `
-            /p:PlatformToolset=v143 `
-            /p:BertRHome="$env:BERT_R_HOME" `
-            /m /nologo /v:minimal
-
-      - name: what came out
-        shell: pwsh
-        run: Get-ChildItem Build -Filter ControlR.exe | Select-Object Name, Length, LastWriteTime | Format-Table -AutoSize
