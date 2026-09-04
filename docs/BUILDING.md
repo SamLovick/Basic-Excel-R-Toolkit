@@ -34,8 +34,11 @@ original 2018 setup and is kept for reference.
   and abseil are linked into the binaries: like the rest of the build they
   use the static C runtime, and the shipped files need no Visual C++
   redistributable on the target machine.
-* An R installation. The tree is currently built against R 4.5.2; see
-  "The R installation" below.
+* An R installation. The tree is currently built against R 4.5.2, and R 4.5
+  is the newest series it supports; see "The R installation" below. R 4.6 is
+  not supported: it removed `Rf_isFrame` and changed the ReadConsole callback
+  signature, so `ControlR` does not compile against its headers. The runtime
+  gate warns when it is given anything newer than 4.5.
 * The Excel SDK, for the add-in project only.
 * Node and yarn, for the console only.
 * NSIS, for the installer only.

@@ -9,6 +9,11 @@ of changes is offered back as pull request
 Newest first. The console shows this file under Help ▸ Release Notes, and
 opens it by itself the first time you run a new version.
 
+**Supported R: 3.5 through 4.5**, built and tested against 4.5.2. R 4.6 is not
+supported yet -- it removed `Rf_isFrame` and changed the ReadConsole callback
+signature, so the controller does not compile against it. The controller warns
+at startup when it is given anything newer than 4.5.
+
 ## 2.4.3-r8
 
 Found by measuring the paths that run most often: a cell function being

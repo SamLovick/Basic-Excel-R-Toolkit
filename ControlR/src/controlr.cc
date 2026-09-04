@@ -532,6 +532,7 @@ unsigned __stdcall ManagementThreadFunction(void *data) {
 #define BERT_R_MINIMUM_MAJOR  3
 #define BERT_R_MINIMUM_MINOR  5
 #define BERT_R_TESTED_MAJOR   4
+#define BERT_R_TESTED_MINOR   5
 
 void ScrubPath(char *string) {
 
@@ -571,10 +572,17 @@ int main(int argc, char** argv) {
     return PROCESS_ERROR_UNSUPPORTED_VERSION;
   }
 
-  if (major > BERT_R_TESTED_MAJOR) {
+  // this build is compiled against R 4.5 headers. R 4.6 removed Rf_isFrame
+  // and changed the ReadConsole callback signature, so it is not supported
+  // yet: say so rather than failing in some less obvious way later.
+
+  if (major > BERT_R_TESTED_MAJOR
+      || (major == BERT_R_TESTED_MAJOR && minor > BERT_R_TESTED_MINOR)) {
     std::cerr << "warning: R " << major << "." << minor << "." << patch
-      << " is newer than the " << BERT_R_TESTED_MAJOR
-      << ".x series this build was tested with; continuing" << std::endl;
+      << " is newer than the R " << BERT_R_TESTED_MAJOR << "."
+      << BERT_R_TESTED_MINOR
+      << " this build was compiled and tested against. it is not supported "
+      << "yet, and may not work; continuing" << std::endl;
   }
 
   // R for Windows uses UTF-8 as its native encoding from 4.2.0, but only

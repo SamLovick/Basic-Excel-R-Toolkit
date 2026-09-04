@@ -10,8 +10,11 @@ the R 3.5 it ships with.
 
 What is different here: one controller built against R 4.5.2, with the R
 version checked at runtime rather than compiled in, so it runs against the R
-you already have (tested with 4.5.2, 4.2.2 and 3.5.0); R is no longer bundled,
-and the installer finds your existing installation. Strings are UTF-8 from end
+you already have, from 3.5 up to 4.5 (tested with 4.5.2, 4.2.2 and 3.5.0).
+**R 4.6 is not supported yet** -- it removed `Rf_isFrame` and changed the
+ReadConsole callback signature, so the controller does not compile against
+it. R is no longer bundled, and the installer finds your existing
+installation.Strings are UTF-8 from end
 to end. The build is x64 only, on the v145 toolset with protobuf 5.29, linked
 statically so it needs no Visual C++ redistributable. The console runs on
 current Electron, Monaco and xterm. Your own functions can carry argument
