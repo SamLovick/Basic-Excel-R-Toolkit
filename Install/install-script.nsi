@@ -496,6 +496,7 @@ CheckExcelRunning:
 
   SetOutPath "$INSTDIR"
   File ..\Build\Welcome.md
+  File ..\Build\CHANGELOG.md
   File "bert2.ico"
 
 
@@ -652,6 +653,7 @@ UninstallCheckExcelRunning:
   Delete "$INSTDIR\ExcelDna.IntelliSense64.xll"
   Delete "$INSTDIR\ExcelDna.IntelliSense-License.txt"
   Delete "$INSTDIR\Welcome.md"
+  Delete "$INSTDIR\CHANGELOG.md"
   Delete "$INSTDIR\bert2.ico"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"

@@ -1159,12 +1159,23 @@ export class Editor {
   }
 
   /**
-   * opens release notes in an editor tab
+   * opens release notes in an editor tab. the changelog is what people
+   * actually want to see on an upgrade; the welcome page is the fallback for
+   * an installation that predates it.
    */
   public OpenReleaseNotes(){
-    let file_path = path.join(process.env.BERT_HOME, "welcome.md");
+
+    let changelog = path.join(process.env.BERT_HOME, "CHANGELOG.md");
+    let file_path = changelog;
+    let label = Constants.files.releaseNotes;
+
+    if (!fs.existsSync(changelog)) {
+      file_path = path.join(process.env.BERT_HOME, "welcome.md");
+      label = Constants.files.welcome;
+    }
+
     return this.OpenFileInternal(file_path, {
-      override_label: Constants.files.welcome,
+      override_label: label,
       add_to_recent_files: false,
       type: DocumentType.rendered
     });

@@ -86,7 +86,8 @@ if (-not $SkipConsole) {
 
 # ---- what a release contains -----------------------------------------------
 $files = "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe",
-         "bert-config-template.json", "user-stylesheet-template.less", "Welcome.md", "bert2.ico"
+         "bert-config-template.json", "user-stylesheet-template.less", "Welcome.md",
+         "CHANGELOG.md", "bert2.ico"
 
 # shipped from this directory rather than from Build. the IntelliSense add-in
 # is a third-party binary, pinned by version and checked against its hash
