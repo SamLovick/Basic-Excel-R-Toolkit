@@ -104,6 +104,17 @@ jobs:
           key: vcpkg-${{ runner.os }}-${{ hashFiles('ControlR/vcpkg.json', 'BERT/vcpkg-configuration.json') }}
           restore-keys: vcpkg-${{ runner.os }}-
 
+      - name: turn on vcpkg's msbuild integration
+        # the project uses vcpkg in manifest mode and gets its include paths
+        # from the integration; hosted runners ship vcpkg but not integrated,
+        # so the first build found no protobuf headers at all
+        shell: pwsh
+        run: |
+          $vcpkg = "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe"
+          if (-not (Test-Path $vcpkg)) { throw "no vcpkg on this runner" }
+          & $vcpkg version
+          & $vcpkg integrate install
+
       - name: build ControlR
         shell: pwsh
         run: |
