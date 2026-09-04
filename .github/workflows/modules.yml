@@ -63,7 +63,9 @@ jobs:
           }
 
           New-Item -ItemType Directory -Force "out/$series" | Out-Null
-          & R CMD INSTALL --library="out/$series" --no-multiarch Module
+          # R.exe, not R: powershell aliases R to Invoke-History, so "& R CMD"
+          # silently runs the wrong thing
+          & R.exe CMD INSTALL --library="out/$series" --no-multiarch Module
           if ($LASTEXITCODE) { throw "R CMD INSTALL failed for R $series" }
 
       - name: check what it was built against
