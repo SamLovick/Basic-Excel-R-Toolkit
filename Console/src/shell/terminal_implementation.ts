@@ -338,8 +338,35 @@ export class TerminalImplementation {
     // ...
   }
 
-  private RunAutocomplete() {
-    
+  /** a completion request waiting for typing to pause */
+  private autocomplete_timer_: any = null;
+
+  /** how long to wait after the last keystroke before asking */
+  private static autocomplete_delay_ms_ = 90;
+
+  /**
+   * asks the language for completions. this runs on every keystroke and the
+   * answer costs R real work -- around ten milliseconds on an empty
+   * workspace, three times that on a full one -- so a fast typist used to
+   * queue one request per character. wait for a pause, then ask once.
+   */
+  private RunAutocomplete(delay = TerminalImplementation.autocomplete_delay_ms_) {
+
+    if (this.autocomplete_timer_) clearTimeout(this.autocomplete_timer_);
+
+    if (delay > 0) {
+      this.autocomplete_timer_ = setTimeout(() => {
+        this.autocomplete_timer_ = null;
+        this.RunAutocompleteNow();
+      }, delay);
+      return;
+    }
+
+    this.RunAutocompleteNow();
+  }
+
+  private RunAutocompleteNow() {
+
     let thennable = this.state_.language_interface_.AutocompleteCallback(this.state_.line_info.buffer, this.state_.line_info.cursor_position);
 
     if(thennable) thennable.then(autocomplete_response => {
