@@ -566,8 +566,11 @@ void BERT::HandleCallback(const std::string &language) {
   // function or we're being called from a shell function. the semantics are different
   // because the main thread may or may not be blocked.
 
+  DebugOut("HandleCallback: entry (%s)\n", language.c_str());
+
   DWORD wait_result = WaitForSingleObject(callback_info_.default_signaled_event_, 0);
   if (wait_result == WAIT_OBJECT_0) {
+    DebugOut("HandleCallback: shell function branch (COM context switch)\n");
     // DebugOut("event 2 is already signaled; this is a shell function\n");
 
     BERTBuffers::CallResponse &call = callback_info_.callback_call_;
@@ -597,13 +600,12 @@ void BERT::HandleCallback(const std::string &language) {
 
   }
   else {
-    DebugOut("event 2 is not signaled; this is a spreadsheet function\n");
-    DebugOut("callback waiting for signal\n");
+    DebugOut("HandleCallback: spreadsheet branch; waking the main thread\n");
 
     // let main thread handle
     SetEvent(callback_info_.default_unsignaled_event_);
     WaitForSingleObject(callback_info_.default_signaled_event_, INFINITE);
-    DebugOut("callback signaled\n");
+    DebugOut("HandleCallback: main thread finished, returning to R\n");
   }
 }
 
@@ -866,6 +868,10 @@ int BERT::ExcelCallback(const BERTBuffers::CallResponse &call, BERTBuffers::Call
 }
 
 void BERT::Init() {
+
+  // Excel calls xlAutoOpen, and spreadsheet functions, on its main thread
+
+  callback_info_.main_thread_id_ = GetCurrentThreadId();
 
   // ReadConfigFile();
 
