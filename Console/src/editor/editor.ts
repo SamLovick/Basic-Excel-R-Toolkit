@@ -154,7 +154,14 @@ export class Editor {
       // global is the sample's workaround for language contributions that
       // otherwise mistake the environment.
 
+      // preferScriptTags keeps the loader on <script> tags. without it, an
+      // electron renderer takes monaco's node path, which loads modules
+      // through node's vm module -- and electron warns that vm is
+      // unsupported in a renderer, crashes are likely, and it may be removed.
+      // the loader offers this switch for exactly this case.
+
       amd_require.config({
+        preferScriptTags: true,
         baseUrl: Editor.UriFromPath(path.join(__dirname, '../../node_modules/monaco-editor/min'))
       });
       self['module'] = undefined;

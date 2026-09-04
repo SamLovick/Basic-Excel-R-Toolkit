@@ -47,6 +47,14 @@ showed the notes you had already read. Rendered documents -- the notes and the
 welcome page, neither of them editable here -- are now read from the file when
 a tab is restored or reopened.
 
+### Monaco no longer loads through node's vm module
+
+The editor's loader took its node path in the renderer, pulling in node's `vm`
+module, and Electron warned on every start that vm is unsupported there, that
+crashes are likely, and that it may be removed. The loader has a switch for
+this case: `preferScriptTags` keeps it on script tags. The warning is gone,
+and the editor -- 92 languages, syntax colouring, undo, find -- is unchanged.
+
 ### For the record, what the measurements showed
 
 A cell function costs **0.3 ms** end to end -- about 3,000 recalculations a
