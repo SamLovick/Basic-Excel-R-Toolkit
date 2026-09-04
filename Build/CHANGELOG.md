@@ -9,6 +9,47 @@ of changes is offered back as pull request
 Newest first. The console shows this file under Help ▸ Release Notes, and
 opens it by itself the first time you run a new version.
 
+## 2.4.3-r8
+
+Found by measuring the paths that run most often: a cell function being
+recalculated, and a keystroke in the console.
+
+### The console stopped answering when a reply was large
+
+Node hands the console at most 64k per read, and the reader assumed every read
+held whole messages -- there was a `FIXME` saying as much. A larger reply
+arrived in pieces, the first piece failed to parse, was dropped, and the rest
+was read as garbage; the request it belonged to never completed, so the shell
+waited for an answer that was never coming.
+
+It showed up as completion: a token matching 3,000 symbols answered in 26 ms,
+while 4,000 hung indefinitely. The reader now keeps the remainder of a split
+frame and waits for the rest. Replies of 340 kB, five reads and more, now
+arrive intact in about half a second.
+
+### Completion offers at most 500 matches
+
+A list of several thousand is no use to read and made every keystroke carry a
+large reply. Long lists are trimmed.
+
+### Completions are asked for once typing pauses
+
+The console asked R for completions on every keystroke, and the answer costs R
+around 10 ms on an empty workspace and 28 ms on one holding 5,000 objects. A
+fast typist queued one request per character. It now waits 90 ms for a pause
+and asks once.
+
+### For the record, what the measurements showed
+
+A cell function costs **0.3 ms** end to end -- about 3,000 recalculations a
+second; 60 cells recalculate in 24 ms. A 1,000-cell range argument costs
+0.5 ms, a 20,000-cell range 3.7 ms, a 400-cell array result 0.5 ms. Console
+evaluation round trips take 0.2-0.5 ms, and printing costs about 0.25 ms a
+line with no slowdown as the scrollback fills. Functions are registered
+non-volatile, so Excel recalculates them only when their inputs change.
+
+Before r7 every cell function took **1,012 ms**, all of it a stray `Sleep`.
+
 ## 2.4.3-r7
 
 ### Excel froze whenever R called back into it
