@@ -17,6 +17,8 @@
  * along with BERT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <Rversion.h>
+
 #include "controlr.h"
 #include "controlr_common.h"
 
@@ -26,13 +28,25 @@
  * we're now basing "exec" commands on the standard repl; otherwise
  * we have to have two parallel paths for exec and debug.
  */
-int R_ReadConsole(const char *prompt, char *buf, int len, int addtohistory) {
+/**
+ * R 4.2 changed this callback's buffer from `char *` to `unsigned char *`
+ * (R_ext/RStartup.h; 3.5 declared it through the `blah1` typedef as
+ * `char *`). The signature has to match the headers we are compiled
+ * against, or the assignment to Rp->ReadConsole below will not convert.
+ */
+#if defined(R_VERSION) && R_VERSION >= R_Version(4, 2, 0)
+typedef unsigned char r_console_buffer;
+#else
+typedef char r_console_buffer;
+#endif
+
+int R_ReadConsole(const char *prompt, r_console_buffer *buf, int len, int addtohistory) {
 
   // every time?
   const char *cprompt = CHAR(STRING_ELT(GetOption1(install("continue")), 0));
   bool is_continuation = (!strcmp(cprompt, prompt));
 
-  return InputStreamRead(prompt, buf, len, addtohistory, is_continuation);
+  return InputStreamRead(prompt, reinterpret_cast<char*>(buf), len, addtohistory, is_continuation);
 }
 
 
