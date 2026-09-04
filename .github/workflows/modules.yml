@@ -51,8 +51,12 @@ jobs:
 
           # a module must never be relinked from objects compiled against
           # another R: clean before building
-          Get-ChildItem Module/src -Include *.o, *.dll -Recurse -ErrorAction SilentlyContinue |
-            Remove-Item -Force -ErrorAction SilentlyContinue
+          # note: github runs pwsh steps with ErrorActionPreference=Stop, so a
+          # Get-ChildItem that matches nothing is fatal. guard it.
+          if (Test-Path Module/src) {
+            $stale = Get-ChildItem -Path Module/src/* -Include *.o, *.dll -File -ErrorAction Ignore
+            if ($stale) { $stale | Remove-Item -Force }
+          }
 
           New-Item -ItemType Directory -Force "out/$series" | Out-Null
           & R CMD INSTALL --library="out/$series" --no-multiarch Module
