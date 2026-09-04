@@ -1,5 +1,37 @@
 [<img src="logo-transparent.svg">](https://bert-toolkit.com/)
 
+About this fork
+---------------
+
+This is a fork of [BERT](https://github.com/sdllc/Basic-Excel-R-Toolkit) by
+Structured Data, carried forward to current R and a current toolchain. The
+upstream project has not released since 2018, and its 2.4.4 build is tied to
+the R 3.5 it ships with.
+
+What is different here: one controller built against R 4.5.2, with the R
+version checked at runtime rather than compiled in, so it runs against the R
+you already have (tested with 4.5.2, 4.2.2 and 3.5.0); R is no longer bundled,
+and the installer finds your existing installation. Strings are UTF-8 from end
+to end. The build is x64 only, on the v145 toolset with protobuf 5.29, linked
+statically so it needs no Visual C++ redistributable. The console runs on
+current Electron, Monaco and xterm. Your own functions can carry argument
+help, shown in Excel's function dialogs and in the formula bar -- see
+[docs/FUNCTION-HELP.md](docs/FUNCTION-HELP.md). Two long-standing faults are
+fixed along the way: a deadlock whenever an R function called back into Excel,
+which made the graphics device unusable, and a console that dropped any reply
+larger than 64k.
+
+[Releases][r1] &middot; [Changelog][r2] &middot; [Building][r3]. The Julia
+controllers are untouched and unbuilt here; this work is about R. The whole
+change set is offered back to the upstream project as [pull request #220][r4].
+
+[r1]: https://github.com/SamLovick/Basic-Excel-R-Toolkit/releases/latest
+[r2]: CHANGELOG.md
+[r3]: docs/BUILDING.md
+[r4]: https://github.com/sdllc/Basic-Excel-R-Toolkit/pull/220
+
+---
+
 The most up-to-date documentation for BERT is on the website (https://bert-toolkit.com):
 
  * [Quick Start][1]
@@ -13,7 +45,7 @@ To install BERT, download the [latest release][5].
 [2]: https://bert-toolkit.com/bert-example-functions
 [3]: https://bert-toolkit.com/talking-to-excel-from-r
 [4]: https://bert-toolkit.com/excel-scripting-interface-in-r
-[5]: https://github.com/sdllc/Basic-Excel-R-Toolkit/releases/latest
+[5]: https://github.com/SamLovick/Basic-Excel-R-Toolkit/releases/latest
 
 Overview
 --------
@@ -61,16 +93,18 @@ Roadmap
 Requirements (Runtime)
 ----------------------
 
- * Excel  
+ * Excel
 
-   BERT supports Excel 2010, 2013 and 2016, both 32-bit and 64-bit (but 
-   only on 64-bit Windows).
+   64-bit Excel: Microsoft 365, or 2016 and later, on Windows 10 1903 or
+   later. This fork builds x64 only; the 32-bit add-in is no longer built
+   or shipped.
 
- * R 3.4.x (optional)
-  
-   This version of BERT does not (at the moment) include R, so you will need
-   an R installation. A plain-vanilla [Windows R install][6] is fine, as long
-   as it is version 3.4.0 or later.
+ * R
+
+   BERT does not include R, so you will need an R installation. A plain-
+   vanilla [Windows R install][6] is fine. 4.2 or later is recommended, and
+   is what the installer looks for; the controller will start against
+   anything from 3.5 up.
 
  * Julia 0.6.2 (optional)
 
@@ -89,9 +123,9 @@ There are several third party tools and libraries used to build BERT:
  * Protocol Buffers
 
    BERT uses [Protocol Buffers][8] for IPC. This requires the protoc compiler
-   (to compile .proto files) as well as runtime libraries, which must be
-   built by compiling the protobuf library. We're currently using version 
-   3.5.0 and the version 3 syntax.
+   (to compile .proto files) as well as runtime libraries. This fork uses
+   version 5.29 with the proto3 syntax, installed through vcpkg in manifest
+   mode, so the build fetches and builds it for you.
 
  * Excel SDK
 
@@ -107,11 +141,12 @@ There are several third party tools and libraries used to build BERT:
 
    A plain-vanilla Windows install of Julia is sufficient.
 
- * Node and Yarn (or npm)
+ * Node and npm
 
-   Building the console requires a recent version of [node][11] and [yarn][12] 
-   (or npm), plus the libraries specified in `dependencies` and 
-   `devDependencies`.
+   Building the console requires a recent version of [node][11] and npm, plus
+   the libraries specified in `dependencies` and `devDependencies`. This fork
+   builds with npm and a checked-in `package-lock.json`; the original used
+   [yarn][12].
 
 License
 -------
