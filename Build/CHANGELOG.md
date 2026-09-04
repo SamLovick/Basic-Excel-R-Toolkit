@@ -11,56 +11,63 @@ opens it by itself the first time you run a new version.
 
 ## Which R versions this works with
 
-The short version: **R 4.5 and 4.6 get everything. Older R gets less**, and
-what you lose depends on how old.
+**R 3.5 through 4.6, all of it.** Cell functions, the console, Excel
+references, graphics and function help work on every version the controller
+runs on.
 
 | Your R | Functions in cells | Console | Excel references | Graphics | Function help |
 | --- | --- | --- | --- | --- | --- |
-| 4.6.x | yes | yes | yes | **yes** | yes |
-| 4.5.x | yes | yes | yes | **yes** | yes |
-| 4.4.x | yes | yes | yes | no | yes |
-| 4.3.x | yes | yes | yes | no | yes |
-| 4.2.x | yes | yes | yes | no | yes |
-| 3.5 to 4.1 | yes | yes | **no** | no | yes |
+| 4.6.x | yes | yes | yes | yes | yes |
+| 4.5.x | yes | yes | yes | yes | yes |
+| 4.4.x | yes | yes | yes | yes* | yes |
+| 4.3.x | yes | yes | yes | yes* | yes |
+| 4.2.x | yes | yes | yes | yes | yes |
+| 3.5.x | yes | yes | yes | yes | yes |
 
-Tested in Excel on 4.6.1, 4.5.2, 4.2.2 and 3.5.0. 4.3 and 4.4 are not tested
-directly; they behave as 4.2 does, for the reason below.
+Tested in Excel on 4.6.1, 4.5.2, 4.2.2 and 3.5.0. \* 4.3 and 4.4 ship modules
+built and checked on CI but are not tested in Excel here, for want of those R
+versions on the build machine; they work by the same mechanism as the four
+that are tested.
 
-### Why it varies
+### How it works, and what to watch for
 
-One `ControlR.exe` hosts every version of R from 3.5 up, so cell functions,
-the console and function help work throughout. The part that does not travel
-is `BERTModule`, a compiled R package that provides the graphics devices, the
-`xlReference` class used for Excel references, and a few helpers.
+One `ControlR.exe` hosts every version of R from 3.5 up. The part that does
+not travel between versions is `BERTModule`, a compiled R package providing
+the graphics devices, the `xlReference` class used for Excel references, and
+a few helpers. R checks a module's **graphics engine version** whenever a
+graphics device is created, and that version changes between R series -- 4.2
+is `R_GE_group`, 4.5 is `R_GE_glyphs`, 4.6 is `R_GE_fontVar` -- so a module
+built for one series cannot draw on another.
 
-R checks a module's **graphics engine version** whenever a graphics device is
-created, and that version changes between R series -- 4.2 is `R_GE_group`,
-4.5 is `R_GE_glyphs`, 4.6 is `R_GE_fontVar`. A module built for one series
-therefore cannot draw on another: it fails with "Graphics API version
-mismatch". This release ships modules for 4.5 and 4.6, so those two draw.
+The install therefore ships one module per series in
+`module/<major>.<minor>`, and `startup.R` loads the one matching the R it is
+hosted in. All six are about 3 MB together, so there is nothing to choose at
+install time and no reason to ship separate downloads per R version: upgrade
+your R and BERT picks up the matching module by itself.
 
-A module from a *nearby* series still loads, though, which is why 4.2 through
-4.4 keep Excel references and the helpers and lose only drawing. R 3.5 is far
-enough back that a module built for 4.5 will not load into it at all, so
-references go too, and `BERT$.Excel(...)` fails with *cannot get a slot
-("virtual") from an object of type "NULL"*.
+If you run an R with no module -- a future series, say -- BERT falls back to
+another module, which still loads and still provides references and the
+helpers; only drawing is lost, and the console says so at startup.
 
-The console says at startup when graphics will not be available, and why,
-rather than leaving it to be discovered when a plot returns an error.
+## 2.4.3-r11
 
-### What would widen it
+### Graphics and Excel references now work on every supported R
 
-Nothing in the design: `startup.R` already picks the module matching the R it
-is hosted in, and a module is about 175 KB, so shipping one per series costs
-nothing worth counting. The limit is purely that each series has to be
-*built*, and each needs its own R installation and its matching Rtools on the
-build machine. Modules for 4.2, 4.3 and 4.4 are buildable; 3.5 needs a
-toolchain old enough that it may no longer be practical.
+r10 shipped modules for 4.5 and 4.6 only, so on 4.2 to 4.4 you lost drawing,
+and on 3.5 you lost Excel references as well. Modules now ship for **3.5,
+4.2, 4.3, 4.4, 4.5 and 4.6** -- the whole range the controller runs on. All
+six are 3 MB together.
 
-**Separate releases per R version would not help.** The only thing that
-differs is which 175 KB module is in the box, the selection is automatic, and
-a user who upgrades R would need a different download. The work is in
-building the modules, not in packaging them.
+The obstacle was never the code: it was that building a module for a series
+needs that R and its matching Rtools on the build machine, well over a
+gigabyte of downloads per series. A workflow now builds them on runners
+instead, one job per series, each checking that the module it produced really
+was built for the R it claims. `build-release.ps1 -FetchModules` takes the
+modules from the last successful run of that workflow, verifying the same
+thing again before packaging.
+
+Verified in Excel: drawing and Excel references both work on R 3.5.0 and
+4.2.2, which is what r10 could not do, and 4.5.2 and 4.6.1 are unchanged.
 
 ## 2.4.3-r10
 

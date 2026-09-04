@@ -21,6 +21,12 @@ Param(
   # of the build. Each needs the matching Rtools on the PATH.
   [string[]]$ModuleRHomes,
 
+  # Take the modules from the "graphics modules" workflow instead of building
+  # them here. That workflow builds one per series on runners, which saves
+  # installing an R and its matching Rtools for every series on this machine.
+  # Needs the gh cli, signed in.
+  [switch]$FetchModules,
+
   [switch]$SkipNative,
   [switch]$SkipModule,
   [switch]$SkipConsole,
@@ -72,10 +78,48 @@ if (-not $SkipNative) {
 # ---- R module --------------------------------------------------------------
 if (-not $SkipModule) {
 
-  $homes = if ($ModuleRHomes) { $ModuleRHomes } else { @($RHome) }
   $root_lib = Join-Path $build "module"
   if (Test-Path $root_lib) { Remove-Item $root_lib -Recurse -Force }
   New-Item -ItemType Directory $root_lib | Out-Null
+
+  $homes = if ($FetchModules) { @() } elseif ($ModuleRHomes) { $ModuleRHomes } else { @($RHome) }
+
+  if ($FetchModules) {
+
+    Step "modules from the last successful 'graphics modules' run"
+
+    # name the repository: this clone also has an upstream remote, and gh
+    # otherwise resolves there, where the workflow does not exist
+    $repo = (& git -C $root remote get-url origin) -replace '.*github\.com[/:]', '' -replace '\.git$', ''
+    Write-Host "  repository: $repo"
+
+    $run_id = & gh run list --repo $repo --workflow "graphics modules" --status success --limit 1 --json databaseId -q ".[0].databaseId"
+    if ($LASTEXITCODE -or -not $run_id) { Fail "could not find a successful module build; run the workflow first" }
+
+    $staging = Join-Path $build "module-artifacts"
+    if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
+    New-Item -ItemType Directory $staging | Out-Null
+
+    & gh run download $run_id --repo $repo --dir $staging
+    if ($LASTEXITCODE) { Fail "could not download the module artifacts" }
+
+    foreach ($dir in Get-ChildItem $staging -Directory) {
+      # artifacts are named BERTModule-<series>
+      $series = $dir.Name -replace '^BERTModule-', ''
+      if (-not (Test-Path (Join-Path $dir.FullName "BERTModule/DESCRIPTION"))) {
+        Fail "artifact $($dir.Name) does not contain a BERTModule"
+      }
+      $built = (Select-String -Path (Join-Path $dir.FullName "BERTModule/DESCRIPTION") -Pattern "^Built:").Line
+      if ($built -notmatch [regex]::Escape("R $series")) {
+        Fail "artifact $($dir.Name) says '$built', which is not R $series"
+      }
+      Copy-Item $dir.FullName (Join-Path $root_lib $series) -Recurse
+      Write-Host "  $series <- run $run_id   $built"
+    }
+
+    if (-not (Get-ChildItem $root_lib -Directory)) { Fail "no modules were downloaded" }
+    Remove-Item $staging -Recurse -Force
+  }
 
   foreach ($r_home in $homes) {
 

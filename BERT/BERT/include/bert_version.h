@@ -26,7 +26,7 @@
 // so a locally built add-in can be told from a release in the console's
 // Help menu. the stamp is the compile time of bert.cc, the one file that
 // includes this header, so it only moves when that file recompiles.
-#define BERT_VERSION_TAG L"-r10"
+#define BERT_VERSION_TAG L"-r11"
 
 #define BERT_WIDEN_(s) L ## s
 #define BERT_WIDEN(s) BERT_WIDEN_(s)
