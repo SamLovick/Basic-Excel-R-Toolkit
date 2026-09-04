@@ -45,14 +45,18 @@ jobs:
       - name: build the module
         shell: pwsh
         run: |
-          $series = & Rscript --vanilla -e "cat(paste0(R.version`$major, '.', strsplit(R.version`$minor, '.', fixed=TRUE)[[1]][1]))"
-          "building for R series $series"
+          # the series comes from the matrix, not from asking R: one less
+          # thing to go wrong before anything has been built
+          $series = ("${{ matrix.r }}" -split '\.')[0..1] -join '.'
+          Write-Host "building BERTModule for R $series"
           "SERIES=$series" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+          Write-Host "R on this runner:"
+          & Rscript --vanilla -e "cat(R.version.string)"
+
           # a module must never be relinked from objects compiled against
-          # another R: clean before building
-          # note: github runs pwsh steps with ErrorActionPreference=Stop, so a
-          # Get-ChildItem that matches nothing is fatal. guard it.
+          # another R. github runs pwsh with ErrorActionPreference=Stop, so
+          # guard the case where there is nothing to clean.
           if (Test-Path Module/src) {
             $stale = Get-ChildItem -Path Module/src/* -Include *.o, *.dll -File -ErrorAction Ignore
             if ($stale) { $stale | Remove-Item -Force }
@@ -65,10 +69,10 @@ jobs:
       - name: check what it was built against
         shell: pwsh
         run: |
-          $desc = Get-Content "out/$env:SERIES/BERTModule/DESCRIPTION" | Select-String "^Built:"
-          "$desc"
-          if ("$desc" -notmatch [regex]::Escape("R $env:SERIES")) {
-            throw "module reports $desc but should be built for R $env:SERIES"
+          $desc = (Get-Content "out/$env:SERIES/BERTModule/DESCRIPTION" | Select-String "^Built:").ToString()
+          Write-Host $desc
+          if ($desc -notmatch "R $([regex]::Escape($env:SERIES))") {
+            throw "module reports '$desc' but should be built for R $env:SERIES"
           }
 
       - uses: actions/upload-artifact@v4
