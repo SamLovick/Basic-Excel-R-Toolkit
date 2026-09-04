@@ -14,6 +14,47 @@ supported yet -- it removed `Rf_isFrame` and changed the ReadConsole callback
 signature, so the controller does not compile against it. The controller warns
 at startup when it is given anything newer than 4.5.
 
+## 2.4.3-r9
+
+Two build-correctness fixes and a clearer refusal. Nothing in how BERT behaves
+day to day changes; if r8 works for you, this is not urgent.
+
+### The controller only built against a hand-edited R header
+
+`R_ReadConsole` was declared with R 3.5's signature, `char *buf`. R 4.2
+changed that callback's buffer to `unsigned char *`, so against a stock R 4.2
+or later the assignment to `Rp->ReadConsole` does not compile. It built here
+only because the R tree this repository is built against had `RStartup.h`
+edited by hand to say `char *` -- which means every binary up to r8 was
+compiled against a modified R header, and nobody could build the controller
+from a clean checkout with an R from CRAN.
+
+The callback now follows whichever headers it is compiled against. Verified
+against stock R 4.5.2 and stock R 4.2.2.
+
+### R 4.6 is refused clearly rather than attempted quietly
+
+The runtime version gate only compared the major version, so R 4.6 passed it
+without comment and the first sign of trouble would have come later and less
+clearly. It now compares the minor version too and says the version is not
+supported yet. **R 4.6 is not supported**: it removed `Rf_isFrame` and changed
+the ReadConsole callback signature.
+
+### The vcpkg baseline is pinned for every project
+
+`vcpkg-configuration.json`, which pins the registry baseline, sat only beside
+the add-in's manifest. Building the controller or the ribbon on its own took
+whatever baseline the local vcpkg defaulted to, which could resolve a protobuf
+incompatible with the checked-in generated code. All three manifests now pin
+the same baseline.
+
+### Elsewhere
+
+- `AddUserButton` tested `id == 0` without establishing that `id` is one
+  value, the same shape that stopped completion working on R 4.3.
+- There is a build on GitHub Actions now: the console, and `startup.R` against
+  four R versions. It is what found the first two items above.
+
 ## 2.4.3-r8
 
 Found by measuring the paths that run most often: a cell function being
