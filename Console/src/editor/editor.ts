@@ -925,9 +925,20 @@ export class Editor {
         if(!document.type_) document.type_ = unserialized.rendered ? DocumentType.rendered : DocumentType.editor;
 
         document.id_ = entry;
-        
+
         if(document.type_ === "rendered"){
-          document.rendered_content_ = unserialized.text || "";
+
+          // a rendered document is a view of a file nobody edits here -- the
+          // release notes, the welcome page. restoring the text we cached
+          // means showing yesterday's file: after an upgrade the notes would
+          // still be the old version's. read it again if it is still there.
+
+          let current = "";
+          if (unserialized.file_path) {
+            try { current = fs.readFileSync(unserialized.file_path, "utf8"); }
+            catch(e) { current = ""; }
+          }
+          document.rendered_content_ = current || unserialized.text || "";
         }
         else {
           if (unserialized.file_path) {
@@ -1163,7 +1174,7 @@ export class Editor {
    * actually want to see on an upgrade; the welcome page is the fallback for
    * an installation that predates it.
    */
-  public OpenReleaseNotes(){
+  public async OpenReleaseNotes(){
 
     let changelog = path.join(process.env.BERT_HOME, "CHANGELOG.md");
     let file_path = changelog;
@@ -1173,6 +1184,17 @@ export class Editor {
       file_path = path.join(process.env.BERT_HOME, "welcome.md");
       label = Constants.files.welcome;
     }
+
+    // opening a file that is already open just switches to it, which would
+    // show what we read when the tab was first opened. these notes change
+    // underneath us -- that is the point of them, on an upgrade -- so close
+    // the old tab and read the file again. nothing is lost: a rendered
+    // document cannot be edited.
+
+    let open_already = this.tabs_.tabs.find(tab =>
+      tab.data && ((tab.data as Document).file_path_ === file_path));
+
+    if (open_already) await this.CloseTab(open_already);
 
     return this.OpenFileInternal(file_path, {
       override_label: label,

@@ -39,6 +39,14 @@ around 10 ms on an empty workspace and 28 ms on one holding 5,000 objects. A
 fast typist queued one request per character. It now waits 90 ms for a pause
 and asks once.
 
+### Release notes showed the previous version's text
+
+Open tabs are restored from a cache rather than re-read, which is right for a
+file you are editing and wrong for the release notes: after an upgrade they
+showed the notes you had already read. Rendered documents -- the notes and the
+welcome page, neither of them editable here -- are now read from the file when
+a tab is restored or reopened.
+
 ### For the record, what the measurements showed
 
 A cell function costs **0.3 ms** end to end -- about 3,000 recalculations a
