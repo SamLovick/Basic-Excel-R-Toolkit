@@ -53,6 +53,16 @@ fail (an unnamed file opens Save As, which you can cancel), and the file stays
 open when it does. Close All and Close Others ask one file at a time and stop
 at the first file you keep.
 
+### Console completion degrades instead of erroring
+
+The completion code borrows R's internal machinery — `utils:::.CompletionEnv`,
+`.win32consoleCompletion` and a dozen more — which is not public API and
+carries no promise between versions. Both entry points now sit behind a single
+`tryCatch`, so a future R that renames or reshapes one of those costs you the
+argument hints rather than printing an error into the shell on every keystroke.
+One wrapper each, not one per candidate: measured at about five microseconds
+against the eight milliseconds the completion search itself takes.
+
 ### Other fixes
 
 - The console came back blank when you opened it a second time from the ribbon

@@ -175,7 +175,7 @@ library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
     # FIXME: are we using this one or the one in the module? and why are there
     # two?
     #
-    .Autocomplete <- function(...){
+    .AutocompleteImpl <- function(...){
       
       ac <- utils:::.win32consoleCompletion(...);
       if( length( utils:::.CompletionEnv$comps) > 0 ){
@@ -191,6 +191,21 @@ library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
       ac$in.quotes <- utils:::.CompletionEnv$in.quotes;
 
       ac;
+    }
+
+    #
+    # the completion code borrows R's internals (utils:::.CompletionEnv,
+    # .win32consoleCompletion and friends), which are not public API and carry
+    # no promise between versions. if a future R renames or reshapes one, give
+    # up the hints rather than printing an error into the shell on every
+    # keystroke. one wrapper here, not one per candidate: it costs a few
+    # microseconds against the milliseconds the search itself takes.
+    #
+    .Autocomplete <- function(...){
+      tryCatch(.AutocompleteImpl(...), error = function(e){
+        list( comps="", function.signature="", token="", fguess="",
+              start=0, end=0, in.quotes=FALSE );
+      });
     }
 
     #
@@ -336,7 +351,7 @@ library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
   #
   # update: now delegating file completion to C (probably more to come).
   #
-  .CustomCompleter <- function(.CompletionEnv){
+  .CustomCompleterImpl <- function(.CompletionEnv){
 
     .fqFunc <- function (line, cursor=-1) 
     {
@@ -485,6 +500,18 @@ library(BERTModule, lib.loc=paste0(Sys.getenv("BERT_HOME"), "module"));
       .CompletionEnv[["comps"]] <- comps
         }
   };
+
+  #
+  # as above: a completer that breaks on a future R should cost the
+  # completions, not fill the shell with errors
+  #
+  .CustomCompleter <- function(.CompletionEnv){
+    tryCatch(.CustomCompleterImpl(.CompletionEnv), error = function(e){
+      .CompletionEnv[["comps"]] <- character();
+      .CompletionEnv[["function.signature"]] <- "";
+      invisible(NULL);
+    });
+  }
 
   rc.options( custom.completer=.CustomCompleter );
 
