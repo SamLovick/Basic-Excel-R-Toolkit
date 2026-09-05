@@ -168,6 +168,10 @@ $files = "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe",
 # rather than committed to the repository.
 $installer_files = "BERT-IntelliSense.xlam", "ExcelDna.IntelliSense64.xll", "ExcelDna.IntelliSense-License.txt",
                    "BERT-IntelliSense.intellisense.xml"
+
+# the icon ships in the payload but is checked in here, next to the installer
+# script that also uses it; copy rather than keep a second copy in Build
+Copy-Item (Join-Path $here "bert2.ico") (Join-Path $build "bert2.ico") -Force
 $intellisense_version = "v1.9.0"
 $intellisense_sha256 = "311E8A0520330EC0C5868EFA2D97E37DF3401AEDED3481014336DD8308A79A8A"
 
