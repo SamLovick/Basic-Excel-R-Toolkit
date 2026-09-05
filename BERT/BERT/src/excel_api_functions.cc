@@ -27,7 +27,6 @@
 #include "windows_api_functions.h"
 
 #include "excel_api_functions.h"
-#include "help_server.h"
 
 #include <fstream>
 
@@ -102,26 +101,6 @@ std::string XMLEscape(const std::string &text) {
 }
 
 /**
- * address of a function's long-form help, or an empty string if it has
- * none. either the language handed us an address, or it generated a page
- * into <home>\help and we serve that ourselves -- excel help topics have
- * to be a URL or a .chm, so a file path on disk is no use. starting the
- * server here means it only ever runs if some function has help.
- */
-std::string HelpTopic(const std::shared_ptr<FunctionDescriptor> &entry) {
-
-  if (entry->help_url_.length()) return entry->help_url_;
-  if (!entry->help_file_.length()) return "";
-
-  std::string root = BERT::Instance()->home_directory();
-  root.append("help\\");
-
-  HelpServer::Start(root);
-  return HelpServer::UrlFor(entry->help_file_);
-
-}
-
-/**
  * writes the registered functions, with their descriptions, in the format
  * the Excel-DNA IntelliSense add-in reads. that add-in shows the argument
  * tooltip Excel itself only provides for its own functions; excel gives an
@@ -160,15 +139,8 @@ void WriteIntelliSenseFile() {
     name.append(".");
     name.append(entry->alias_.length() ? entry->alias_ : entry->name_);
 
-    // the IntelliSense add-in turns HelpTopic into a link in the tooltip,
-    // so long-form help is one click from the formula the user is typing
-
-    std::string help_topic = HelpTopic(entry);
-
     file << "    <Function Name=\"" << XMLEscape(name)
-         << "\" Description=\"" << XMLEscape(entry->description_) << "\"";
-    if (help_topic.length()) file << " HelpTopic=\"" << XMLEscape(help_topic) << "\"";
-    file << ">\r\n";
+         << "\" Description=\"" << XMLEscape(entry->description_) << "\">\r\n";
 
     for (auto argument : entry->arguments_) {
       std::string description = argument->description_;
@@ -247,22 +219,10 @@ void RegisterFunctions() {
     else ss << "Exported " << language_service->name() << " Functions";
     Convert::StringToXLOPER(xlParm[6], ss.str().c_str(), false);
 
-    // xlParm[8] is the help topic, which excel opens from the "Help on this
-    // function" button in the Function Arguments dialog. it has to be a URL
-    // or a .chm topic, and both halves of "<topic>!<context id>" are
-    // required; a page we serve ourselves is context 0. this slot used to
-    // carry the registration index, which is not a topic and did nothing.
-
-    std::string help_topic = HelpTopic(entry);
-    if (help_topic.length()) {
-      ss.clear();
-      ss.str("");
-      ss << help_topic << "!0";
-      Convert::StringToXLOPER(xlParm[8], ss.str(), false);
-    }
-    else {
-      xlParm[8]->xltype = xltypeMissing;
-    }
+    ss.clear();
+    ss.str("");
+    ss << index;
+    Convert::StringToXLOPER(xlParm[8], ss.str(), false);
 
     if(entry->description_.length()) Convert::StringToXLOPER(xlParm[9], entry->description_, false);
     else Convert::StringToXLOPER(xlParm[9], "Exported Function", false);

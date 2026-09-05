@@ -68,16 +68,7 @@ public:
   std::string category_;
 
   std::string description_;
-
-  /**
-   * long-form help: an address the language gave us (used as it stands), or
-   * the name of a page the language generated into <home>\help, which we
-   * serve on loopback. either becomes the function's Excel help topic.
-   * see docs/FUNCTION-HELP.md.
-   */
-  std::string help_url_;
-  std::string help_file_;
-
+  
   /** it's a waste to carry this around, but it seems convenient */
   // std::string language_prefix_;
 
@@ -131,8 +122,6 @@ public:
     category_ = rhs.category_;
     flags_ = rhs.flags_;
     description_ = rhs.description_;
-    help_url_ = rhs.help_url_;
-    help_file_ = rhs.help_file_;
     register_id_ = rhs.register_id_;
     language_key_ = rhs.language_key_;
     language_service_ = rhs.language_service_;

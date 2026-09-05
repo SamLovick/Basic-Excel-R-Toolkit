@@ -431,12 +431,6 @@ inline constexpr FunctionDescriptor::Impl_::Impl_(
         category_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
-        help_url_(
-            &::google::protobuf::internal::fixed_address_empty_string,
-            ::_pbi::ConstantInitialized()),
-        help_file_(
-            &::google::protobuf::internal::fixed_address_empty_string,
-            ::_pbi::ConstantInitialized()),
         function_{nullptr},
         call_type_{static_cast< ::BERTBuffers::CallType >(0)},
         flags_{0u} {}
@@ -884,11 +878,7 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::BERTBuffers::FunctionDescriptor, _impl_.flags_),
         PROTOBUF_FIELD_OFFSET(::BERTBuffers::FunctionDescriptor, _impl_.category_),
         PROTOBUF_FIELD_OFFSET(::BERTBuffers::FunctionDescriptor, _impl_.arguments_),
-        PROTOBUF_FIELD_OFFSET(::BERTBuffers::FunctionDescriptor, _impl_.help_url_),
-        PROTOBUF_FIELD_OFFSET(::BERTBuffers::FunctionDescriptor, _impl_.help_file_),
         0,
-        ~0u,
-        ~0u,
         ~0u,
         ~0u,
         ~0u,
@@ -971,12 +961,12 @@ static const ::_pbi::MigrationSchema
         {185, -1, -1, sizeof(::BERTBuffers::MIMEData)},
         {195, -1, -1, sizeof(::BERTBuffers::Console)},
         {210, 223, -1, sizeof(::BERTBuffers::FunctionElement)},
-        {228, 243, -1, sizeof(::BERTBuffers::FunctionDescriptor)},
-        {250, -1, -1, sizeof(::BERTBuffers::FunctionList)},
-        {259, -1, -1, sizeof(::BERTBuffers::EnumValue)},
-        {269, -1, -1, sizeof(::BERTBuffers::EnumType)},
-        {279, -1, -1, sizeof(::BERTBuffers::ExternalPointer)},
-        {291, -1, -1, sizeof(::BERTBuffers::CallResponse)},
+        {228, 241, -1, sizeof(::BERTBuffers::FunctionDescriptor)},
+        {246, -1, -1, sizeof(::BERTBuffers::FunctionList)},
+        {255, -1, -1, sizeof(::BERTBuffers::EnumValue)},
+        {265, -1, -1, sizeof(::BERTBuffers::EnumType)},
+        {275, -1, -1, sizeof(::BERTBuffers::ExternalPointer)},
+        {287, -1, -1, sizeof(::BERTBuffers::CallResponse)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::BERTBuffers::_Complex_default_instance_._instance,
@@ -1054,41 +1044,41 @@ const char descriptor_table_protodef_variable_2eproto[] ABSL_ATTRIBUTE_SECTION_V
     "ment\022\014\n\004name\030\001 \001(\t\022\021\n\ttype_name\030\002 \001(\t\022,\n"
     "\rdefault_value\030\003 \001(\0132\025.BERTBuffers.Varia"
     "ble\022\023\n\013description\030\004 \001(\t\022\r\n\005index\030\005 \001(\r\""
-    "\345\001\n\022FunctionDescriptor\022.\n\010function\030\001 \001(\013"
+    "\300\001\n\022FunctionDescriptor\022.\n\010function\030\001 \001(\013"
     "2\034.BERTBuffers.FunctionElement\022(\n\tcall_t"
     "ype\030\002 \001(\0162\025.BERTBuffers.CallType\022\r\n\005flag"
     "s\030\003 \001(\r\022\020\n\010category\030\004 \001(\t\022/\n\targuments\030\005"
-    " \003(\0132\034.BERTBuffers.FunctionElement\022\020\n\010he"
-    "lp_url\030\006 \001(\t\022\021\n\thelp_file\030\007 \001(\t\"B\n\014Funct"
-    "ionList\0222\n\tfunctions\030\001 \003(\0132\037.BERTBuffers"
-    ".FunctionDescriptor\"(\n\tEnumValue\022\014\n\004name"
-    "\030\001 \001(\t\022\r\n\005value\030\002 \001(\005\"@\n\010EnumType\022\014\n\004nam"
-    "e\030\001 \001(\t\022&\n\006values\030\002 \003(\0132\026.BERTBuffers.En"
-    "umValue\"\224\001\n\017ExternalPointer\022\026\n\016interface"
-    "_name\030\001 \001(\t\022\017\n\007pointer\030\002 \001(\004\0222\n\tfunction"
-    "s\030\003 \003(\0132\037.BERTBuffers.FunctionDescriptor"
-    "\022$\n\005enums\030\004 \003(\0132\025.BERTBuffers.EnumType\"\333"
-    "\002\n\014CallResponse\022\n\n\002id\030\001 \001(\r\022\014\n\004wait\030\002 \001("
-    "\010\022\r\n\003err\030\003 \001(\tH\000\022\'\n\006result\030\004 \001(\0132\025.BERTB"
-    "uffers.VariableH\000\022\'\n\007console\030\005 \001(\0132\024.BER"
-    "TBuffers.ConsoleH\000\022!\n\004code\030\006 \001(\0132\021.BERTB"
-    "uffers.CodeH\000\022\027\n\rshell_command\030\007 \001(\tH\000\022;"
-    "\n\rfunction_call\030\010 \001(\0132\".BERTBuffers.Comp"
-    "ositeFunctionCallH\000\0222\n\rfunction_list\030\t \001"
-    "(\0132\031.BERTBuffers.FunctionListH\000\022\026\n\014user_"
-    "command\030\n \001(\rH\000B\013\n\toperation*N\n\tErrorTyp"
-    "e\022\013\n\007GENERIC\020\000\022\006\n\002NA\020\001\022\007\n\003INF\020\002\022\t\n\005PARSE"
-    "\020\003\022\r\n\tEXECUTION\020\004\022\t\n\005OTHER\020\017*(\n\010CallType"
-    "\022\n\n\006method\020\000\022\007\n\003get\020\001\022\007\n\003put\020\002*=\n\nCallTa"
-    "rget\022\014\n\010language\020\000\022\007\n\003COM\020\001\022\n\n\006system\020\002\022"
-    "\014\n\010graphics\020\003*3\n\025GraphicsUpdateCommand\022\n"
-    "\n\006update\020\000\022\016\n\nquery_size\020\001B\002H\001b\006proto3"
+    " \003(\0132\034.BERTBuffers.FunctionElement\"B\n\014Fu"
+    "nctionList\0222\n\tfunctions\030\001 \003(\0132\037.BERTBuff"
+    "ers.FunctionDescriptor\"(\n\tEnumValue\022\014\n\004n"
+    "ame\030\001 \001(\t\022\r\n\005value\030\002 \001(\005\"@\n\010EnumType\022\014\n\004"
+    "name\030\001 \001(\t\022&\n\006values\030\002 \003(\0132\026.BERTBuffers"
+    ".EnumValue\"\224\001\n\017ExternalPointer\022\026\n\016interf"
+    "ace_name\030\001 \001(\t\022\017\n\007pointer\030\002 \001(\004\0222\n\tfunct"
+    "ions\030\003 \003(\0132\037.BERTBuffers.FunctionDescrip"
+    "tor\022$\n\005enums\030\004 \003(\0132\025.BERTBuffers.EnumTyp"
+    "e\"\333\002\n\014CallResponse\022\n\n\002id\030\001 \001(\r\022\014\n\004wait\030\002"
+    " \001(\010\022\r\n\003err\030\003 \001(\tH\000\022\'\n\006result\030\004 \001(\0132\025.BE"
+    "RTBuffers.VariableH\000\022\'\n\007console\030\005 \001(\0132\024."
+    "BERTBuffers.ConsoleH\000\022!\n\004code\030\006 \001(\0132\021.BE"
+    "RTBuffers.CodeH\000\022\027\n\rshell_command\030\007 \001(\tH"
+    "\000\022;\n\rfunction_call\030\010 \001(\0132\".BERTBuffers.C"
+    "ompositeFunctionCallH\000\0222\n\rfunction_list\030"
+    "\t \001(\0132\031.BERTBuffers.FunctionListH\000\022\026\n\014us"
+    "er_command\030\n \001(\rH\000B\013\n\toperation*N\n\tError"
+    "Type\022\013\n\007GENERIC\020\000\022\006\n\002NA\020\001\022\007\n\003INF\020\002\022\t\n\005PA"
+    "RSE\020\003\022\r\n\tEXECUTION\020\004\022\t\n\005OTHER\020\017*(\n\010CallT"
+    "ype\022\n\n\006method\020\000\022\007\n\003get\020\001\022\007\n\003put\020\002*=\n\nCal"
+    "lTarget\022\014\n\010language\020\000\022\007\n\003COM\020\001\022\n\n\006system"
+    "\020\002\022\014\n\010graphics\020\003*3\n\025GraphicsUpdateComman"
+    "d\022\n\n\006update\020\000\022\016\n\nquery_size\020\001B\002H\001b\006proto"
+    "3"
 };
 static ::absl::once_flag descriptor_table_variable_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_variable_2eproto = {
     false,
     false,
-    3238,
+    3201,
     descriptor_table_protodef_variable_2eproto,
     "variable.proto",
     &descriptor_table_variable_2eproto_once,
@@ -6653,9 +6643,7 @@ inline PROTOBUF_NDEBUG_INLINE FunctionDescriptor::Impl_::Impl_(
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
         arguments_{visibility, arena, from.arguments_},
-        category_(arena, from.category_),
-        help_url_(arena, from.help_url_),
-        help_file_(arena, from.help_file_) {}
+        category_(arena, from.category_) {}
 
 FunctionDescriptor::FunctionDescriptor(
     ::google::protobuf::Arena* arena,
@@ -6689,9 +6677,7 @@ inline PROTOBUF_NDEBUG_INLINE FunctionDescriptor::Impl_::Impl_(
     ::google::protobuf::Arena* arena)
       : _cached_size_{0},
         arguments_{visibility, arena},
-        category_(arena),
-        help_url_(arena),
-        help_file_(arena) {}
+        category_(arena) {}
 
 inline void FunctionDescriptor::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -6711,8 +6697,6 @@ inline void FunctionDescriptor::SharedDtor(MessageLite& self) {
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.category_.Destroy();
-  this_._impl_.help_url_.Destroy();
-  this_._impl_.help_file_.Destroy();
   delete this_._impl_.function_;
   this_._impl_.~Impl_();
 }
@@ -6765,15 +6749,15 @@ const ::google::protobuf::internal::ClassData* FunctionDescriptor::GetClassData(
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 7, 2, 64, 2> FunctionDescriptor::_table_ = {
+const ::_pbi::TcParseTable<3, 5, 2, 47, 2> FunctionDescriptor::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_._has_bits_),
     0, // no _extensions_
-    7, 56,  // max_field_number, fast_idx_mask
+    5, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967168,  // skipmap
+    4294967264,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    7,  // num_field_entries
+    5,  // num_field_entries
     2,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     _class_data_.base(),
@@ -6799,12 +6783,8 @@ const ::_pbi::TcParseTable<3, 7, 2, 64, 2> FunctionDescriptor::_table_ = {
     // repeated .BERTBuffers.FunctionElement arguments = 5;
     {::_pbi::TcParser::FastMtR1,
      {42, 63, 1, PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_.arguments_)}},
-    // string help_url = 6;
-    {::_pbi::TcParser::FastUS1,
-     {50, 63, 0, PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_.help_url_)}},
-    // string help_file = 7;
-    {::_pbi::TcParser::FastUS1,
-     {58, 63, 0, PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_.help_file_)}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
@@ -6823,21 +6803,13 @@ const ::_pbi::TcParseTable<3, 7, 2, 64, 2> FunctionDescriptor::_table_ = {
     // repeated .BERTBuffers.FunctionElement arguments = 5;
     {PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_.arguments_), -1, 1,
     (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
-    // string help_url = 6;
-    {PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_.help_url_), -1, 0,
-    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
-    // string help_file = 7;
-    {PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_.help_file_), -1, 0,
-    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }}, {{
     {::_pbi::TcParser::GetTable<::BERTBuffers::FunctionElement>()},
     {::_pbi::TcParser::GetTable<::BERTBuffers::FunctionElement>()},
   }}, {{
-    "\36\0\0\0\10\0\10\11"
+    "\36\0\0\0\10\0\0\0"
     "BERTBuffers.FunctionDescriptor"
     "category"
-    "help_url"
-    "help_file"
   }},
 };
 
@@ -6850,8 +6822,6 @@ PROTOBUF_NOINLINE void FunctionDescriptor::Clear() {
 
   _impl_.arguments_.Clear();
   _impl_.category_.ClearToEmpty();
-  _impl_.help_url_.ClearToEmpty();
-  _impl_.help_file_.ClearToEmpty();
   cached_has_bits = _impl_._has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
     ABSL_DCHECK(_impl_.function_ != nullptr);
@@ -6920,22 +6890,6 @@ PROTOBUF_NOINLINE void FunctionDescriptor::Clear() {
                     target, stream);
           }
 
-          // string help_url = 6;
-          if (!this_._internal_help_url().empty()) {
-            const std::string& _s = this_._internal_help_url();
-            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "BERTBuffers.FunctionDescriptor.help_url");
-            target = stream->WriteStringMaybeAliased(6, _s, target);
-          }
-
-          // string help_file = 7;
-          if (!this_._internal_help_file().empty()) {
-            const std::string& _s = this_._internal_help_file();
-            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "BERTBuffers.FunctionDescriptor.help_file");
-            target = stream->WriteStringMaybeAliased(7, _s, target);
-          }
-
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
             target =
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -6974,16 +6928,6 @@ PROTOBUF_NOINLINE void FunctionDescriptor::Clear() {
             if (!this_._internal_category().empty()) {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
                                               this_._internal_category());
-            }
-            // string help_url = 6;
-            if (!this_._internal_help_url().empty()) {
-              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
-                                              this_._internal_help_url());
-            }
-            // string help_file = 7;
-            if (!this_._internal_help_file().empty()) {
-              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
-                                              this_._internal_help_file());
             }
           }
            {
@@ -7024,12 +6968,6 @@ void FunctionDescriptor::MergeImpl(::google::protobuf::MessageLite& to_msg, cons
   if (!from._internal_category().empty()) {
     _this->_internal_set_category(from._internal_category());
   }
-  if (!from._internal_help_url().empty()) {
-    _this->_internal_set_help_url(from._internal_help_url());
-  }
-  if (!from._internal_help_file().empty()) {
-    _this->_internal_set_help_file(from._internal_help_file());
-  }
   cached_has_bits = from._impl_._has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
     ABSL_DCHECK(from._impl_.function_ != nullptr);
@@ -7066,8 +7004,6 @@ void FunctionDescriptor::InternalSwap(FunctionDescriptor* PROTOBUF_RESTRICT othe
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   _impl_.arguments_.InternalSwap(&other->_impl_.arguments_);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.category_, &other->_impl_.category_, arena);
-  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.help_url_, &other->_impl_.help_url_, arena);
-  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.help_file_, &other->_impl_.help_file_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(FunctionDescriptor, _impl_.flags_)
       + sizeof(FunctionDescriptor::_impl_.flags_)

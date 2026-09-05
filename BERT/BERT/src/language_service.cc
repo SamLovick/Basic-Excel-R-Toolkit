@@ -702,16 +702,11 @@ FUNCTION_LIST LanguageService::CreateFunctionList(const BERTBuffers::CallRespons
         }
         arglist.push_back(std::make_shared<ArgumentDescriptor>(argument.name(), value.str(), argument.description()));
       }
-      auto function_descriptor = std::make_shared<FunctionDescriptor>(
-        descriptor.function().name(),
-        descriptor.function().name(),
-        name, key, descriptor.category(), descriptor.function().description(),
-        arglist, descriptor.flags(), language_service_pointer);
-
-      function_descriptor->help_url_ = descriptor.help_url();
-      function_descriptor->help_file_ = descriptor.help_file();
-
-      function_list.push_back(function_descriptor);
+      function_list.push_back(std::make_shared<FunctionDescriptor>(
+        descriptor.function().name(), 
+        descriptor.function().name(), 
+        name, key, descriptor.category(), descriptor.function().description(), 
+        arglist, descriptor.flags(), language_service_pointer));
     }
   }
 

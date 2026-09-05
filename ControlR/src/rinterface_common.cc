@@ -426,17 +426,6 @@ bool ReadSourceFile(const std::string &file, bool notify) {
   // the path stays in R's native encoding; see the encoding note at the top
   R_tryEval(Rf_lang2(Rf_install("source"), Rf_mkString(file.c_str())), R_GlobalEnv, &err);
 
-  // read the roxygen-style comment blocks in the file, which the functions
-  // themselves do not carry (a comment above a definition is not part of the
-  // closure). silent and unchecked: documentation is not worth an error on a
-  // file that loaded, and an older startup.R will not have the function.
-
-  int help_error = 0;
-  SEXP bert = R_tryEvalSilent(Rf_lang2(Rf_install("get"), Rf_mkString("BERT")), R_GlobalEnv, &help_error);
-  if (!help_error && bert && bert != R_NilValue) {
-    R_tryEvalSilent(Rf_lang2(Rf_install(".ScanHelpFile"), Rf_mkString(file.c_str())), bert, &help_error);
-  }
-
   return !err;
 }
 
@@ -850,33 +839,6 @@ BERTBuffers::CallResponse& ListScriptFunctions(BERTBuffers::CallResponse &respon
                 }
                 else if (attribute.name() == "category") {
                   descriptor->set_category(attribute.str());
-                }
-
-                // long-form help: an address the function carries itself
-                // (attr "help.url"), or a page startup.R generated from a
-                // roxygen-style comment block. see docs/FUNCTION-HELP.md.
-                //
-                // a character vector of length one crosses as a scalar and
-                // anything longer as an array, as with description above;
-                // only the first element means anything here.
-
-                else if (attribute.name() == "help.url") {
-                  if (attribute.value_case() == BERTBuffers::Variable::ValueCase::kStr) {
-                    descriptor->set_help_url(attribute.str());
-                  }
-                  else if (attribute.value_case() == BERTBuffers::Variable::ValueCase::kArr
-                      && attribute.arr().data_size() > 0) {
-                    descriptor->set_help_url(attribute.arr().data(0).str());
-                  }
-                }
-                else if (attribute.name() == "help.file") {
-                  if (attribute.value_case() == BERTBuffers::Variable::ValueCase::kStr) {
-                    descriptor->set_help_file(attribute.str());
-                  }
-                  else if (attribute.value_case() == BERTBuffers::Variable::ValueCase::kArr
-                      && attribute.arr().data_size() > 0) {
-                    descriptor->set_help_file(attribute.arr().data(0).str());
-                  }
                 }
               }
             }
