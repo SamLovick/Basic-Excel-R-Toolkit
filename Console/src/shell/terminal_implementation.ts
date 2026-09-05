@@ -1160,13 +1160,19 @@ export class TerminalImplementation {
     // so this is for layout. unfortunate. this node fills the container
     // and scrolls horizontally when the terminal is wider than it (see
     // custom-fit, which keeps columns at least as wide as the output).
+    //
+    // it's inset a little on the left so text doesn't start hard against
+    // the edge of the pane. we inset the scrolling node itself rather than
+    // the terminal inside it: the fit addon sizes columns from this node's
+    // width, so a terminal narrower than its parent would overflow and add
+    // a spurious horizontal scrollbar.
 
     let inner_node = document.createElement("div");
     inner_node.style.position = "absolute";
     inner_node.style.top = "0";
     inner_node.style.right = "0";
     inner_node.style.bottom = "0";
-    inner_node.style.left = "0";
+    inner_node.style.left = "6px";
     inner_node.style.overflowX = "auto";
     inner_node.style.overflowY = "hidden";
     this.scroll_node_ = inner_node;
