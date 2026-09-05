@@ -49,7 +49,7 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
-## Unreleased
+## 2.4.3-r13
 
 ### The release notes read better
 
@@ -59,6 +59,14 @@ so they now share the paragraph indent. A table has no left padding of its
 own, so its first column started to the left of the surrounding text: it now
 lines up, with cell padding and a rule under the header row. List items ran
 together, and now sit a paragraph's space apart.
+
+### The R shell has a left margin
+
+Text in the shell started hard against the left edge of the pane. It's now
+inset by a few pixels. The inset is on the scrolling container rather than
+the terminal itself, so the fit logic still sizes columns to the space the
+terminal actually has and wide output doesn't pick up a stray horizontal
+scrollbar.
 
 ## 2.4.3-r12
 

@@ -49,7 +49,7 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
-## Unreleased
+## 2.4.3-r13
 
 ### The release notes read better
 
