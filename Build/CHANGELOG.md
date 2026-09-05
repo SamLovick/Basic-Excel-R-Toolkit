@@ -49,6 +49,17 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## Unreleased
+
+### The release notes read better
+
+Presentation only, in the console's rendered markdown -- these notes and the
+welcome page. Subheadings were indented further than the text beneath them,
+so they now share the paragraph indent. A table has no left padding of its
+own, so its first column started to the left of the surrounding text: it now
+lines up, with cell padding and a rule under the header row. List items ran
+together, and now sit a paragraph's space apart.
+
 ## 2.4.3-r12
 
 ### Complex numbers lost all but six digits on the way to Excel
