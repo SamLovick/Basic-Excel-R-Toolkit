@@ -299,6 +299,18 @@ message FunctionDescriptor {
   string category = 4;
 
   repeated FunctionElement arguments = 5;
+
+  // long-form help, beyond the one-line description Excel shows in its
+  // dialogs. either of these becomes the function's help topic, which is
+  // what the "Help on this function" button opens.
+  //
+  // help_url is an address the language gave us, used as it stands.
+  // help_file is a page the language generated into <home>\help, which the
+  // add-in serves over loopback: an Excel help topic has to be a URL or a
+  // .chm, a plain file path is not accepted.
+
+  string help_url = 6;
+  string help_file = 7;
 }
 
 /** 

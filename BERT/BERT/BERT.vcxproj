@@ -41,6 +41,7 @@
     <ClInclude Include="include\debug_functions.h" />
     <ClInclude Include="include\excel_api_functions.h" />
     <ClInclude Include="include\file_change_watcher.h" />
+    <ClInclude Include="include\help_server.h" />
     <ClInclude Include="include\language_desc.h" />
     <ClInclude Include="include\language_service.h" />
     <ClInclude Include="include\basic_functions.h" />
@@ -74,6 +75,7 @@
     <ClCompile Include="src\debug_functions.cc" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\excel_api_functions.cc" />
+    <ClCompile Include="src\help_server.cc" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BERT.rc" />

@@ -3622,6 +3622,8 @@ class FunctionDescriptor final : public ::google::protobuf::Message
   enum : int {
     kArgumentsFieldNumber = 5,
     kCategoryFieldNumber = 4,
+    kHelpUrlFieldNumber = 6,
+    kHelpFileFieldNumber = 7,
     kFunctionFieldNumber = 1,
     kCallTypeFieldNumber = 2,
     kFlagsFieldNumber = 3,
@@ -3657,6 +3659,38 @@ class FunctionDescriptor final : public ::google::protobuf::Message
   inline PROTOBUF_ALWAYS_INLINE void _internal_set_category(
       const std::string& value);
   std::string* _internal_mutable_category();
+
+  public:
+  // string help_url = 6;
+  void clear_help_url() ;
+  const std::string& help_url() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_help_url(Arg_&& arg, Args_... args);
+  std::string* mutable_help_url();
+  PROTOBUF_NODISCARD std::string* release_help_url();
+  void set_allocated_help_url(std::string* value);
+
+  private:
+  const std::string& _internal_help_url() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_help_url(
+      const std::string& value);
+  std::string* _internal_mutable_help_url();
+
+  public:
+  // string help_file = 7;
+  void clear_help_file() ;
+  const std::string& help_file() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_help_file(Arg_&& arg, Args_... args);
+  std::string* mutable_help_file();
+  PROTOBUF_NODISCARD std::string* release_help_file();
+  void set_allocated_help_file(std::string* value);
+
+  private:
+  const std::string& _internal_help_file() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_help_file(
+      const std::string& value);
+  std::string* _internal_mutable_help_file();
 
   public:
   // .BERTBuffers.FunctionElement function = 1;
@@ -3699,8 +3733,8 @@ class FunctionDescriptor final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 2,
-      47, 2>
+      3, 7, 2,
+      64, 2>
       _table_;
 
   friend class ::google::protobuf::MessageLite;
@@ -3721,6 +3755,8 @@ class FunctionDescriptor final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::RepeatedPtrField< ::BERTBuffers::FunctionElement > arguments_;
     ::google::protobuf::internal::ArenaStringPtr category_;
+    ::google::protobuf::internal::ArenaStringPtr help_url_;
+    ::google::protobuf::internal::ArenaStringPtr help_file_;
     ::BERTBuffers::FunctionElement* function_;
     int call_type_;
     ::uint32_t flags_;
@@ -9545,6 +9581,102 @@ inline ::google::protobuf::RepeatedPtrField<::BERTBuffers::FunctionElement>*
 FunctionDescriptor::_internal_mutable_arguments() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.arguments_;
+}
+
+// string help_url = 6;
+inline void FunctionDescriptor::clear_help_url() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_url_.ClearToEmpty();
+}
+inline const std::string& FunctionDescriptor::help_url() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:BERTBuffers.FunctionDescriptor.help_url)
+  return _internal_help_url();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void FunctionDescriptor::set_help_url(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_url_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:BERTBuffers.FunctionDescriptor.help_url)
+}
+inline std::string* FunctionDescriptor::mutable_help_url() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_help_url();
+  // @@protoc_insertion_point(field_mutable:BERTBuffers.FunctionDescriptor.help_url)
+  return _s;
+}
+inline const std::string& FunctionDescriptor::_internal_help_url() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.help_url_.Get();
+}
+inline void FunctionDescriptor::_internal_set_help_url(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_url_.Set(value, GetArena());
+}
+inline std::string* FunctionDescriptor::_internal_mutable_help_url() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.help_url_.Mutable( GetArena());
+}
+inline std::string* FunctionDescriptor::release_help_url() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:BERTBuffers.FunctionDescriptor.help_url)
+  return _impl_.help_url_.Release();
+}
+inline void FunctionDescriptor::set_allocated_help_url(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_url_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.help_url_.IsDefault()) {
+    _impl_.help_url_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:BERTBuffers.FunctionDescriptor.help_url)
+}
+
+// string help_file = 7;
+inline void FunctionDescriptor::clear_help_file() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_file_.ClearToEmpty();
+}
+inline const std::string& FunctionDescriptor::help_file() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:BERTBuffers.FunctionDescriptor.help_file)
+  return _internal_help_file();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void FunctionDescriptor::set_help_file(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_file_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:BERTBuffers.FunctionDescriptor.help_file)
+}
+inline std::string* FunctionDescriptor::mutable_help_file() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_help_file();
+  // @@protoc_insertion_point(field_mutable:BERTBuffers.FunctionDescriptor.help_file)
+  return _s;
+}
+inline const std::string& FunctionDescriptor::_internal_help_file() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.help_file_.Get();
+}
+inline void FunctionDescriptor::_internal_set_help_file(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_file_.Set(value, GetArena());
+}
+inline std::string* FunctionDescriptor::_internal_mutable_help_file() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.help_file_.Mutable( GetArena());
+}
+inline std::string* FunctionDescriptor::release_help_file() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:BERTBuffers.FunctionDescriptor.help_file)
+  return _impl_.help_file_.Release();
+}
+inline void FunctionDescriptor::set_allocated_help_file(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.help_file_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.help_file_.IsDefault()) {
+    _impl_.help_file_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:BERTBuffers.FunctionDescriptor.help_file)
 }
 
 // -------------------------------------------------------------------

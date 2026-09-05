@@ -119,6 +119,91 @@ it is a second add-in in your setup that BERT does not control. If you
 would rather not, leave the box clear: the dialogs described above need
 nothing extra.
 
+## Longer help: a page of it
+
+The descriptions above are one line each, which is all Excel's dialogs have
+room for. For anything longer -- what the function actually does, the
+assumptions behind it, an example -- write a comment block above the
+function, in the style roxygen2 uses:
+
+```r
+#' Compound annual growth rate
+#'
+#' The constant rate of growth that would take `StartValue` to `EndValue`
+#' over `NumberOfYears` periods. The result is a rate, so format the cell
+#' as a percentage.
+#'
+#' @param StartValue value at the start of the first period
+#' @param EndValue value at the end of the last period
+#' @param NumberOfYears number of periods between the two values
+#'
+#' @details Both values must have the same sign and neither may be zero.
+#' @return The growth rate per period, as a decimal fraction.
+#'
+#' @examples
+#' =R.CAGR(100, 150, 5)     ' 0.0845
+#'
+#' @seealso FiniteTerminalValue
+CAGR <- function(StartValue, EndValue, NumberOfYears) {
+  (EndValue / StartValue) ^ (1 / NumberOfYears) - 1
+}
+```
+
+BERT renders that into a page and registers it as the function's help topic.
+**Help on this function**, at the bottom left of the Function Arguments
+dialog, opens it; so does the link in the IntelliSense tooltip, if you have
+that installed.
+
+The block does double duty: the first paragraph becomes the function's
+one-line description and each `@param` becomes that argument's, so a
+documented function needs no `description` attribute. An explicit
+`attr(f, "description")` still wins if you have both, which is useful when
+the dialog wants shorter wording than the page.
+
+Recognized tags are `@param`, `@return` (or `@returns`), `@details`,
+`@examples`, `@seealso`, `@category` and `@url`. Anything else is treated as
+description text rather than an error, so a function documented for
+roxygen2 loads unchanged. Within the text, `` `code` `` and `**bold**` are
+rendered.
+
+The same text can go on the function instead of above it, which suits
+functions that are generated rather than typed:
+
+```r
+attr(CAGR, "help") <- c(
+  "Compound annual growth rate",
+  "",
+  "@param StartValue value at the start of the first period")
+```
+
+To point at documentation you already have somewhere else, give the address
+instead, and no page is generated:
+
+```r
+attr(CAGR, "help.url") <- "https://example.com/docs/cagr.html"
+```
+
+`@url` in a comment block does the same thing.
+
+### Where the pages live
+
+In `%LOCALAPPDATA%\BERT2\help`: one self-contained html file per documented
+function, rewritten every time BERT registers functions, so an edit to a
+comment shows up as soon as you save the file. Pages for functions that no
+longer have documentation are removed.
+
+Excel will not open a help topic from a file path -- the topic has to be a
+URL or a `.chm`, which is Excel's rule, not BERT's. So the add-in serves the
+pages itself, from a listener bound to `127.0.0.1` on a port Windows picks,
+started only if some function has help and shut down with Excel. Nothing
+outside the machine can reach it, and it serves nothing but those generated
+pages.
+
+A comment block is not part of the function object -- R keeps source
+references for the body, not for what sits above the definition -- so BERT
+reads the file itself, after loading it, and matches each block to the
+definition that follows it. A block followed by anything else is ignored.
+
 ## How it travels
 
 Worth knowing when something does not appear where you expect.
@@ -132,3 +217,9 @@ still works, but the arguments past the 22nd are not described.
 
 The same descriptors produce the IntelliSense XML, so both routes always
 agree.
+
+Long-form help travels the same way, in two more fields on the descriptor:
+`help_url` for an address the function carries, `help_file` for a page
+`startup.R` generated. The add-in turns whichever it gets into the help
+topic it registers, appending `!0` -- the context id Excel's topic format
+requires.

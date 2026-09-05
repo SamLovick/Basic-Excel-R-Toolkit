@@ -49,6 +49,34 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## Unreleased
+
+### Functions can carry a page of help, not just a line
+
+Excel's dialogs have room for one line about a function and one about each
+argument. Anything longer now goes in a roxygen-style comment block above
+the function -- `#' text`, with `@param`, `@details`, `@return`,
+`@examples`, `@seealso`, `@category` and `@url`. BERT renders the block into
+a page and registers it as the function's help topic, so "Help on this
+function" in the Function Arguments dialog opens it, as does the link in the
+IntelliSense tooltip.
+
+The block also supplies the one-line description and the argument
+descriptions when the function has no `description` attribute, so a function
+need only be documented once. `attr(f, "help")` takes the same text for
+functions that are generated rather than typed, and `attr(f, "help.url")`
+points at documentation you already have elsewhere, in which case no page is
+generated.
+
+Pages live in `%LOCALAPPDATA%\BERT2\help`, are rewritten whenever functions
+are registered, and are removed when their function loses its documentation.
+Excel will not open a help topic from a file path -- it takes a URL or a
+`.chm` -- so the add-in serves them from a listener on `127.0.0.1`, on a
+port Windows picks, started only when some function has help and closed with
+Excel.
+
+`docs/FUNCTION-HELP.md` has the details.
+
 ## 2.4.3-r13
 
 ### The release notes read better

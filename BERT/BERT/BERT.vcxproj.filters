@@ -73,6 +73,9 @@
     <ClInclude Include="include\excel_api_functions.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\help_server.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Common\message_utilities.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -126,6 +129,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="src\file_change_watcher.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\help_server.cc">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Common\json11\json11.cpp">

@@ -35,6 +35,7 @@
 #include "excel_api_functions.h"
 
 #include "bert_version.h"
+#include "help_server.h"
 
 BERT* BERT::instance_ = 0;
 
@@ -1088,6 +1089,9 @@ void BERT::Close() {
 
   // file watch thread
   file_watcher_.Shutdown();
+
+  // help pages, if any function had any
+  HelpServer::Stop();
 
   ShutdownConsole();
 
