@@ -49,6 +49,25 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## Unreleased
+
+### Complex numbers lost all but six digits on the way to Excel
+
+Excel has no complex type, so a complex value crosses as text in the `a+bi`
+form Excel's own engineering functions use -- `IMREAL`, `IMABS` and the rest
+read it directly, and it is byte-identical to what Excel's `COMPLEX()`
+produces. But the conversion used default stream formatting, which is six
+significant figures, so
+
+    314159.2653589793 + 2.718281828459045i
+
+arrived in the cell as `314159+2.71828i`. Everything past six digits was gone,
+silently. Ordinary doubles were never affected: they cross as binary doubles.
+
+Now formatted with 15 significant digits, which is what Excel itself keeps and
+what R prints. `IMREAL` of a value returned from R, minus the same number
+computed in the sheet, is now exactly zero.
+
 ## 2.4.3-r11
 
 ### Graphics and Excel references now work on every supported R
