@@ -23,6 +23,10 @@
 
   font-family: Segoe UI;
 
+  // headings line up with the text they head: paragraphs are padded 10px, so
+  // these are too. h2 and h3 used to be 16px, which set them further in than
+  // the body text underneath them.
+
   h1, h2, h3 {
     font-weight: 300;
     padding: 3px 10px;
@@ -40,12 +44,7 @@
   
   h2 {
     font-size: 18px;
-    padding: 3px 16px;
     border-bottom: 1px solid #ddd;
-  }
-
-  h3 {
-    padding: 3px 16px;
   }
 
   & code {
