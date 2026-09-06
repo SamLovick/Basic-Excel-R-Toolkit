@@ -162,12 +162,29 @@ void WriteIntelliSenseFile() {
 
 void RegisterFunctions() {
 
-  LPXLOPER12 xlParm[32];
+  // xlfRegister takes ten fixed parameters -- module, procedure, type text,
+  // function text, argument text, macro type, category, shortcut, help topic
+  // and the function description -- and then one help string per argument.
+
+  const int registration_parameters = 10 + BERT_MAX_ARGUMENTS;
+
+  // excel's own limit: xlfRegister takes at most 255 arguments
+  static_assert(registration_parameters <= 255,
+    "BERT_MAX_ARGUMENTS leaves no room for xlfRegister's fixed parameters");
+
+  LPXLOPER12 xlParm[registration_parameters];
   XLOPER12 xlRegisterID;
   int err;
 
+  // "U" for the return, then one "Q" per argument slot. every function is
+  // registered at the full width; excel passes xltypeMissing for the slots
+  // the caller did not fill, and the dispatcher trims them.
+
+  std::string type_text = "U";
+  type_text.append(BERT_MAX_ARGUMENTS, 'Q');
+
   BERT *bert = BERT::Instance();
-  for (int i = 0; i < 32; i++) {
+  for (int i = 0; i < registration_parameters; i++) {
     xlParm[i] = new XLOPER12;
     xlParm[i]->xltype = xltypeMissing;
   }
@@ -193,7 +210,7 @@ void RegisterFunctions() {
     ss.str("");
     ss << "BERTFunctionCall" << index;
     Convert::StringToXLOPER(xlParm[1], ss.str(), false);
-    Convert::StringToXLOPER(xlParm[2], "UQQQQQQQQQQQQQQQQ", false);
+    Convert::StringToXLOPER(xlParm[2], type_text, false);
 
     ss.clear();
     ss.str("");
@@ -209,7 +226,24 @@ void RegisterFunctions() {
     ss.clear();
     ss.str("");
     for (auto arg : entry->arguments_) ss << ", " << arg->name_;
-    Convert::StringToXLOPER(xlParm[4], ss.str().c_str() + 2, false);
+
+    // (the leading ", " is not part of the list. a function with no
+    // arguments has nothing here at all -- reading past the end of that
+    // string is what the old c_str() + 2 did.)
+
+    std::string argument_text = ss.str().length() > 2 ? ss.str().substr(2) : "";
+
+    // registration strings are capped at 255 characters, and with enough
+    // arguments this list runs past that. an over-long string makes excel
+    // refuse the registration, taking the whole function with it, so cut
+    // the list at the last name that fits.
+
+    if (argument_text.length() > 255) {
+      size_t cut = argument_text.rfind(", ", 255);
+      argument_text = argument_text.substr(0, cut == std::string::npos ? 255 : cut);
+    }
+
+    Convert::StringToXLOPER(xlParm[4], argument_text, false);
 
     Convert::StringToXLOPER(xlParm[5], "1", false);
 
@@ -227,7 +261,7 @@ void RegisterFunctions() {
     if(entry->description_.length()) Convert::StringToXLOPER(xlParm[9], entry->description_, false);
     else Convert::StringToXLOPER(xlParm[9], "Exported Function", false);
 
-    for (int i = 10; i < 32; i++) {
+    for (int i = 10; i < registration_parameters; i++) {
       int index = i - 10;
       xlParm[i]->xltype = xltypeMissing;
       if (entry->arguments_.size() > index){
@@ -243,14 +277,14 @@ void RegisterFunctions() {
     }
 
     xlRegisterID.xltype = xltypeMissing;
-    err = Excel12v(xlfRegister, &xlRegisterID, 32, xlParm);
+    err = Excel12v(xlfRegister, &xlRegisterID, registration_parameters, xlParm);
     if (!err) {
       if( xlRegisterID.xltype == xltypeNum ) entry->register_id_ = (int32_t)xlRegisterID.val.num;
       else if( xlRegisterID.xltype == xltypeInt ) entry->register_id_ = (int32_t)xlRegisterID.val.w;
     }
     Excel12(xlFree, 0, 1, &xlRegisterID);
 
-    for (int i = 1; i < 32; i++) {
+    for (int i = 1; i < registration_parameters; i++) {
       if (xlParm[i]->xltype & xltypeStr) delete[] xlParm[i]->val.str;
     }
 
@@ -258,7 +292,7 @@ void RegisterFunctions() {
   }
 
   Excel12(xlFree, 0, 1, xlParm[0]);
-  for (int i = 0; i < 32; i++) delete xlParm[i];
+  for (int i = 0; i < registration_parameters; i++) delete xlParm[i];
 
   WriteIntelliSenseFile();
 

@@ -49,6 +49,42 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## Unreleased
+
+### Functions can take 64 arguments, up from 16
+
+A function called from a cell was limited to sixteen arguments, and the
+seventeenth was simply not passed. The limit is now 64.
+
+Excel fixes a function's arity when it is registered and calls a separate
+entry point for each function, so BERT keeps a pool of dispatchers, each
+compiled with a fixed number of parameters. That number was 16. It is now
+64, in one constant -- `BERT_MAX_ARGUMENTS` -- with the type string and the
+registration block derived from it. Excel's own ceiling is 254; 64 was
+chosen because every dispatcher carries the full width whether it needs it
+or not, which costs about 1.4 MB in the add-in. Raising it further is a
+one-line change if 64 ever stops being enough.
+
+`BERT.Call`, the generic form, takes 64 as well.
+
+An R function may have more formals than that. It still registers and still
+works; a formula can fill the first 64. Excel refuses a formula with more
+arguments than the function was registered for, so the call never reaches R.
+
+Verified in Excel with functions of 16, 17, 20, 40, 64 and 70 arguments:
+each was passed every argument the formula gave it, up to 64.
+
+### Registration no longer breaks on long argument lists
+
+Excel caps every string handed to `xlfRegister` at 255 characters, the list
+of argument names included -- and rejects the whole registration if one runs
+over, which with 64 arguments is easy. The list is now cut at the last name
+that fits. Arguments past the cut still work and are still described; they
+just don't appear in the signature line the Insert Function dialog draws.
+
+Also fixed alongside it: building that list for a function with no arguments
+read two bytes past the end of an empty string.
+
 ## 2.4.3-r15
 
 ### File dialogs start in the functions directory

@@ -127,8 +127,13 @@ The descriptions live on the R function. `BERT$list.functions` reads them
 with `attributes`, the controller turns them into the function descriptor it
 sends to the add-in, and the add-in passes them to Excel's `xlfRegister`,
 which takes a function description and one help string per argument. BERT
-registers room for 22 of those, so a function with more arguments than that
-still works, but the arguments past the 22nd are not described.
+registers one for each of the 64 arguments a function can take from a cell.
+
+Excel caps every registration string at 255 characters, the list of argument
+names included. A function with many long argument names runs past that, and
+the list is cut at the last name that fits: the arguments beyond it still
+work and are still described, they just don't appear in the signature line
+the Insert Function dialog draws.
 
 The same descriptors produce the IntelliSense XML, so both routes always
 agree.
