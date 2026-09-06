@@ -1518,8 +1518,20 @@ export class Editor {
 
     if(save_as_dialog) {
 
+      // a document that has never been saved is offered to the functions
+      // directory, keeping the name it has; one that has a path stays where
+      // it is
+
+      let suggestion = document.file_path_;
+      if (!suggestion) {
+        let functions_directory = this.FunctionsDirectory();
+        suggestion = functions_directory
+          ? path.join(functions_directory, document.label_)
+          : document.label_;
+      }
+
       file_path = remote.dialog.showSaveDialogSync({
-        defaultPath: document.file_path_ || document.label_
+        defaultPath: suggestion
       });
 
       if(!file_path) {
@@ -1757,17 +1769,49 @@ export class Editor {
     });
   }
 
-  /** 
+  /**
+   * where a file dialog should start: the functions directory, since that is
+   * where the R files BERT loads actually live. undefined if the config has
+   * not loaded, has no functions directory, or names one that isn't there --
+   * the dialog then does whatever it did before.
+   */
+  private FunctionsDirectory(): string {
+
+    try {
+
+      let config = ConfigManager.config;
+      let directory = (config && config.BERT) ? config.BERT.functionsDirectory : null;
+      if (!directory) return undefined;
+
+      // the setting may hold environment variables, as the add-in allows
+      // when it reads the same field
+
+      directory = directory.replace(/%([^%]+)%/g, (match: string, name: string) => {
+        return process.env[name] || match;
+      });
+
+      return fs.existsSync(directory) ? directory : undefined;
+
+    }
+    catch (e) {
+      console.warn(e);
+      return undefined;
+    }
+
+  }
+
+  /**
    * opens file in the editor, in a new tab. if the file is already open,
    * switches to the open buffer. if no path is passed, shows a file chooser.
    */
   public OpenFile(file_path?: string) {
     if (file_path) return this.OpenFileInternal(file_path);
     let files = remote.dialog.showOpenDialogSync({
-      properties: ["openFile"]
+      properties: ["openFile"],
+      defaultPath: this.FunctionsDirectory()
     });
     if (files && files.length) return this.OpenFileInternal(files[0]);
-    return Promise.reject("no file selected"); 
+    return Promise.reject("no file selected");
   }
 
   /** update layout, should be called after resize */

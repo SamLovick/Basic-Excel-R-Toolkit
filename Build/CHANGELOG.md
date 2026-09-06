@@ -49,6 +49,20 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## Unreleased
+
+### File dialogs start in the functions directory
+
+Open a file from the console and the dialog started wherever Windows last
+left it, which was rarely where your R files are. It now starts in the
+functions directory -- the one BERT loads from, `functionsDirectory` in
+`bert-config.json`, environment variables and all. Save As does the same for
+a document that has never been saved; one that already has a path still
+opens where it lives.
+
+If the setting is missing, or names a directory that isn't there, the
+dialogs behave as they did before.
+
 ## 2.4.3-r14
 
 ### The editor showed you yesterday's file
