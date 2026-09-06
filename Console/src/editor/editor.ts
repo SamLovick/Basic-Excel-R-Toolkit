@@ -948,23 +948,54 @@ export class Editor {
           document.rendered_content_ = current || unserialized.text || "";
         }
         else {
+
+          // what we stored is a cache; the file on disk is the document.
+          // it can have moved on while we were not running -- a different
+          // file saved over it, an edit in another editor -- and restoring
+          // our copy would then show text that is quietly wrong. read it
+          // again. unsaved edits are the exception: those exist nowhere
+          // else, so they are kept, still marked dirty.
+
+          let text = unserialized.text || "";
+          let dirty = !!unserialized.dirty;
+
+          if (unserialized.file_path) {
+
+            let current: string = null;
+            try { current = fs.readFileSync(unserialized.file_path, "utf8"); }
+            catch (e) { current = null; }
+
+            if (current === null && !dirty) {
+
+              // the file is gone. a tab showing the last thing we saw of a
+              // file that no longer exists is worse than no tab at all.
+
+              localStorage.removeItem(key);
+              return [undefined, undefined];
+
+            }
+
+            if (current !== null && !dirty) text = current;
+
+          }
+
           if (unserialized.file_path) {
             if (unserialized.overrideLanguage) {
-              document.model_ = monaco.editor.createModel(unserialized.text,
+              document.model_ = monaco.editor.createModel(text,
                 unserialized.overrideLanguage, unserialized.uri || null);
             }
             else {
-              document.model_ = monaco.editor.createModel(unserialized.text, undefined,
+              document.model_ = monaco.editor.createModel(text, undefined,
                 monaco.Uri.file(unserialized.file_path));
             }
           }
           else {
-            document.model_ = monaco.editor.createModel(unserialized.text, "plaintext");
+            document.model_ = monaco.editor.createModel(text, "plaintext");
           }
           document.model_.updateOptions(this.editor_options_);
 
           document.saved_version_ = document.model_.getAlternativeVersionId()
-          document.dirty_ = !!unserialized.dirty;
+          document.dirty_ = dirty;
           document.view_state_ = unserialized.view_state;
 
           if (document.dirty_) document.saved_version_--;
@@ -1141,6 +1172,13 @@ export class Editor {
     if (activate) this.tabs_.ActivateTab(activate);
 
     this.UpdateOpenFiles();
+
+    // a file dropped above (it no longer exists) counts as removed, so
+    // UpdateOpenFiles has just put it on the unclose list. nothing has been
+    // closed in this session, and unclosing a deleted file does nothing.
+
+    this.closed_tabs_ = [];
+    MenuUtilities.SetEnabled("main.file.unclose-tab", false);
 
   }
 

@@ -49,6 +49,23 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## Unreleased
+
+### The editor showed you yesterday's file
+
+The console remembers which files you had open and restores them at
+startup, but it restored the *text* it had cached rather than reading the
+file again. Edit a file elsewhere between sessions -- or save an entirely
+different file over it -- and the tab came back showing the old contents,
+with nothing to say so. A file that had been deleted came back too.
+
+Restored tabs are now read from disk. If the file is gone, the tab is not
+restored and the cached copy is dropped.
+
+Unsaved edits are the exception: a tab that was modified and never saved
+keeps what you typed, still marked as modified, because that text exists
+nowhere else. Everything else follows the file.
+
 ## 2.4.3-r13
 
 ### The release notes read better
