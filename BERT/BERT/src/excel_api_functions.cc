@@ -427,6 +427,13 @@ BOOL WINAPI xlAutoOpen(void)
   bert->RegisterLanguageCalls();
   bert->MapFunctions();
   RegisterFunctions();
+
+  // with the ribbon installed it has already handed us excel's Application
+  // pointer; without it, ask excel now, while it is idle. this is the only
+  // safe moment -- see docs/XLL-ONLY.md.
+
+  bert->AcquireApplicationDispatch();
+
   return true;
 }
 

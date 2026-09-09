@@ -36,6 +36,11 @@
 
 #include "bert_version.h"
 
+// for AccessibleObjectFromWindow, which is how an add-in with no COM
+// component of its own reaches excel's object model
+#include <oleacc.h>
+#pragma comment(lib, "oleacc.lib")
+
 BERT* BERT::instance_ = 0;
 
 BERT* BERT::Instance() {
@@ -257,6 +262,178 @@ void BERT::ShowConsole() {
   }
 }
 
+namespace {
+
+  /**
+   * excel's window classes, outside in: the frame, the desktop area, and
+   * the pane that answers to OBJID_NATIVEOM. only the innermost one has an
+   * object model attached, so all three have to be walked.
+   */
+  const wchar_t *EXCEL_FRAME_CLASS = L"XLMAIN";
+  const wchar_t *EXCEL_DESK_CLASS = L"XLDESK";
+  const wchar_t *EXCEL_PANE_CLASS = L"EXCEL7";
+
+  bool WindowClassIs(HWND window, const wchar_t *name) {
+    wchar_t buffer[64];
+    if (!GetClassNameW(window, buffer, sizeof(buffer) / sizeof(buffer[0]))) return false;
+    return !wcscmp(buffer, name);
+  }
+
+  BOOL CALLBACK FindPaneWindow(HWND window, LPARAM parameter) {
+    if (WindowClassIs(window, EXCEL_PANE_CLASS)) {
+      *(reinterpret_cast<HWND*>(parameter)) = window;
+      return FALSE;
+    }
+    if (WindowClassIs(window, EXCEL_DESK_CLASS)) {
+      EnumChildWindows(window, FindPaneWindow, parameter);
+      return *(reinterpret_cast<HWND*>(parameter)) ? FALSE : TRUE;
+    }
+    return TRUE;
+  }
+
+  struct FrameSearch {
+    DWORD process_id;
+    WORD handle_low_word;  // what xlGetHwnd gives us, which is not the whole handle
+    HWND pane;
+  };
+
+  BOOL CALLBACK FindFrameWindow(HWND window, LPARAM parameter) {
+
+    auto search = reinterpret_cast<FrameSearch*>(parameter);
+
+    DWORD process_id = 0;
+    GetWindowThreadProcessId(window, &process_id);
+    if (process_id != search->process_id) return TRUE;
+
+    if (!WindowClassIs(window, EXCEL_FRAME_CLASS)) return TRUE;
+
+    // excel 2013 and later give each workbook its own frame window, so
+    // there can be several. any of them leads to the same Application, but
+    // prefer the one excel named, if we have it.
+
+    if (search->handle_low_word
+        && LOWORD(reinterpret_cast<ULONG_PTR>(window)) != search->handle_low_word
+        && search->pane) {
+      return TRUE;
+    }
+
+    HWND pane = 0;
+    EnumChildWindows(window, FindPaneWindow, reinterpret_cast<LPARAM>(&pane));
+    if (!pane) return TRUE;
+
+    search->pane = pane;
+
+    // an exact match is as good as it gets; anything else, keep looking in
+    // case a better one turns up
+    return (search->handle_low_word
+      && LOWORD(reinterpret_cast<ULONG_PTR>(window)) == search->handle_low_word) ? FALSE : TRUE;
+  }
+
+  /**
+   * asks excel for its Application object without going through COM
+   * registration: the accessibility interface on the sheet pane hands back
+   * the window's object model, and Application hangs off that. this is the
+   * standard route for an add-in that has no COM component of its own.
+   *
+   * returns an AddRef'd pointer, or null if excel has no window yet (very
+   * early in startup) or refuses.
+   */
+  LPDISPATCH AcquireExcelApplication() {
+
+    FrameSearch search = { GetCurrentProcessId(), 0, 0 };
+
+    // xlGetHwnd returns the low word of the frame handle, which is enough
+    // to pick the right one out of the windows this process owns
+
+    XLOPER12 handle;
+    handle.xltype = xltypeNil;
+    if (!Excel12(xlGetHwnd, &handle, 0)) {
+      if (handle.xltype == xltypeInt) search.handle_low_word = (WORD)handle.val.w;
+      else if (handle.xltype == xltypeNum) search.handle_low_word = (WORD)handle.val.num;
+    }
+    Excel12(xlFree, 0, 1, &handle);
+
+    EnumWindows(FindFrameWindow, reinterpret_cast<LPARAM>(&search));
+    if (!search.pane) {
+      DebugOut("no excel pane window; cannot reach the object model\n");
+      return 0;
+    }
+
+    CComPtr<IDispatch> window_object;
+    HRESULT hresult = AccessibleObjectFromWindow(search.pane, (DWORD)OBJID_NATIVEOM,
+      IID_IDispatch, reinterpret_cast<void**>(&window_object));
+
+    if (FAILED(hresult) || !window_object) {
+      DebugOut("AccessibleObjectFromWindow failed: 0x%x\n", hresult);
+      return 0;
+    }
+
+    // that is excel's Window object; the Application hangs off it
+
+    DISPID dispid;
+    CComBSTR name = L"Application";
+    hresult = window_object->GetIDsOfNames(IID_NULL, &name.m_str, 1, 1033, &dispid);
+    if (FAILED(hresult)) {
+      DebugOut("no Application property on the window object: 0x%x\n", hresult);
+      return 0;
+    }
+
+    DISPPARAMS parameters = { 0, 0, 0, 0 };
+    CComVariant result;
+    hresult = window_object->Invoke(dispid, IID_NULL, 1033, DISPATCH_PROPERTYGET,
+      &parameters, &result, 0, 0);
+
+    if (FAILED(hresult) || result.vt != VT_DISPATCH || !result.pdispVal) {
+      DebugOut("could not read Application: 0x%x\n", hresult);
+      return 0;
+    }
+
+    result.pdispVal->AddRef();
+    return result.pdispVal;
+
+  }
+
+}
+
+LPDISPATCH BERT::ApplicationDispatch() {
+  return application_dispatch_;
+}
+
+bool BERT::AcquireApplicationDispatch() {
+
+  if (application_dispatch_) return true;
+
+  // this has to happen while excel is idle. asking for the object model
+  // while a cell is calculating -- which is where graphics updates arrive
+  // from -- hangs excel outright, so this is called at load and never from
+  // the callback path. see docs/XLL-ONLY.md.
+
+  LPDISPATCH acquired = AcquireExcelApplication();
+  if (!acquired) return false;
+
+  DebugOut("took the Application pointer from excel directly\n");
+  UseApplicationDispatch(acquired);
+
+  return true;
+
+}
+
+void BERT::UseApplicationDispatch(LPDISPATCH application_dispatch) {
+
+  if (!application_dispatch || application_dispatch == application_dispatch_) return;
+
+  application_dispatch_ = application_dispatch;
+
+  // marshall pointer
+  AtlMarshalPtrInProc(application_dispatch_, IID_IDispatch, &stream_pointer_);
+
+  // set pointer in various language services
+  for (const auto &language_service : language_services_) {
+    language_service->SetApplicationPointer(application_dispatch_);
+  }
+
+}
+
 void BERT::SetPointers(ULONG_PTR excel_pointer, ULONG_PTR ribbon_pointer) {
 
   ribbon_menu_dispatch_ = reinterpret_cast<LPDISPATCH>(ribbon_pointer);
@@ -266,15 +443,7 @@ void BERT::SetPointers(ULONG_PTR excel_pointer, ULONG_PTR ribbon_pointer) {
     pending_user_buttons_.clear();
   }
 
-  application_dispatch_ = reinterpret_cast<LPDISPATCH>(excel_pointer);
-
-  // marshall pointer
-  AtlMarshalPtrInProc(application_dispatch_, IID_IDispatch, &stream_pointer_);
-
-  // set pointer in various language services
-  for (const auto &language_service : language_services_) {
-    language_service->SetApplicationPointer(application_dispatch_);
-  }
+  UseApplicationDispatch(reinterpret_cast<LPDISPATCH>(excel_pointer));
 
 }
 
@@ -716,10 +885,10 @@ void BERT::UpdateGraphics(const BERTBuffers::CompositeFunctionCall &call, BERTBu
     if (argument.value_case() == BERTBuffers::Variable::kGraphics) {
       const auto &graphics = argument.graphics();
       if (graphics.command() == BERTBuffers::GraphicsUpdateCommand::query_size) {
-        BERTGraphics::QuerySize(graphics.name(), response, application_dispatch_);
+        BERTGraphics::QuerySize(graphics.name(), response, ApplicationDispatch());
       }
       else {
-        BERTGraphics::UpdateGraphics(graphics, application_dispatch_);
+        BERTGraphics::UpdateGraphics(graphics, ApplicationDispatch());
       }
     }
   }

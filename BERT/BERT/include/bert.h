@@ -70,8 +70,13 @@ private:
   /** marshalled excel pointer for calls from separate threads */
   IStream *stream_pointer_;
 
-  /** excel COM pointer */
-  LPDISPATCH application_dispatch_;
+  /**
+   * excel COM pointer. initialized here because it is read to decide
+   * whether we have one yet -- the constructor never set it, and reading
+   * an uninitialized pointer to test it is undefined even when the ribbon
+   * fills it in a moment later.
+   */
+  LPDISPATCH application_dispatch_ = 0;
 
   /** pointer to ribbon menu */
   LPDISPATCH ribbon_menu_dispatch_;
@@ -199,7 +204,31 @@ public:
   /** sets COM pointers */
   void SetPointers(ULONG_PTR excel_pointer, ULONG_PTR ribbon_pointer);
 
-  /** 
+  /**
+   * excel's Application object, which drawing into a sheet and the EXCEL
+   * object in R both need.
+   *
+   * the ribbon add-in hands this over as it loads, and used to be the only
+   * source of it: with no ribbon there was no pointer, and graphics quietly
+   * drew nothing. AcquireApplicationDispatch gets one without it.
+   */
+  LPDISPATCH ApplicationDispatch();
+
+  /**
+   * asks excel for the Application pointer directly, the way an add-in with
+   * no COM component of its own has to. does nothing if we already have
+   * one, and returns whether we have one now.
+   *
+   * MUST be called while excel is idle -- from xlAutoOpen, not from a
+   * callback. asking for the object model while a cell is calculating hangs
+   * excel. see docs/XLL-ONLY.md.
+   */
+  bool AcquireApplicationDispatch();
+
+  /** takes an Application pointer, from the ribbon or from excel directly */
+  void UseApplicationDispatch(LPDISPATCH application_dispatch);
+
+  /**
    * tail routine for enum windows proc; hides or shows matching windows
    */
   static BOOL CALLBACK ShowConsoleWindowCallback(HWND hwnd, LPARAM lParam);

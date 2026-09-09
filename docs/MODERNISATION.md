@@ -131,6 +131,29 @@ plain fills, which is what happens today.
   the machine and a place to put encoding round-trip tests. It would run in
   CI.
 
+## An install without the ribbon
+
+Built on the `xll-only` branch, not merged. The ribbon is a COM add-in: it
+has to be registered, Excel can disable it on its own, and it is the only
+part of the install that reaches outside BERT's own directory. Dropping it
+was not possible before, for two reasons that were not obvious:
+
+* The ribbon **loads the xll**. `CConnect::OnConnection` calls
+  `Application.RegisterXLL`, and nothing else does, so with the ribbon
+  disabled BERT did not load at all -- no functions, no console. An install
+  without it has to register `BERT64.xll` in Excel's own add-in list.
+* The ribbon was also the only source of Excel's `Application` pointer,
+  which drawing into a sheet and the `EXCEL` object in R both need. Without
+  it, graphics silently drew nothing.
+
+The branch fixes both: the installer registers the xll directly when the
+ribbon component is cleared, and the add-in asks Excel for the Application
+pointer itself at load. Verified with the ribbon disabled -- functions,
+console, `EXCEL` object and graphics all work, and a plot lands in the
+sheet exactly as it does with the ribbon installed. See `docs/XLL-ONLY.md`,
+which also records why the pointer has to be taken at load and not lazily:
+asking for the object model while a cell is calculating hangs Excel.
+
 ## Suggested order
 
 1. Land `r4-support`.

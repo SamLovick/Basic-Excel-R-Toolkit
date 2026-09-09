@@ -65,6 +65,11 @@ Var ExcelKey
 !define IS_XLL_VALUE '/R "$INSTDIR\ExcelDna.IntelliSense64.xll"'
 !define IS_XLAM_VALUE '"$INSTDIR\BERT-IntelliSense.xlam"'
 
+; BERT's own add-in, in the form Excel's add-in list wants. normally the
+; ribbon loads the xll for us (RegisterXLL, as it connects), so this is only
+; written for an install without the ribbon. see docs/XLL-ONLY.md
+!define BERT_XLL_VALUE '/R "$INSTDIR\BERT64.xll"'
+
 Icon "bert2.ico"
 UninstallIcon "bert2.ico"
 Name "BERT ${VERSION}"
@@ -450,7 +455,6 @@ CheckExcelRunning:
   File /r ..\Build\startup
 
   File ..\Build\BERT64.xll
-  File ..\Build\BERTRibbon2x64.dll
   File ..\Build\ControlR.exe
 
   ; protobuf is linked statically now; remove the DLLs an earlier build
@@ -470,8 +474,6 @@ CheckExcelRunning:
   File "..\Build\user-stylesheet-template.less"
   IfFileExists "$INSTDIR\user-stylesheet.less" +2
   CopyFiles "$INSTDIR\user-stylesheet-template.less" "$INSTDIR\user-stylesheet.less"
-
-  ExecWait 'regsvr32 /s "$INSTDIR\BERTRibbon2x64.dll"'
 
   WriteRegStr HKCU "Software\BERT2" "InstallDir" "$INSTDIR"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -520,6 +522,21 @@ CheckExcelRunning:
 SectionEnd
 
 ;--------------------------------
+; optional: the BERT tab on the ribbon. it is a COM add-in, so it has to be
+; registered, and excel can disable it independently of the xll. everything
+; that reaches R -- functions in cells, the console, graphics, the EXCEL
+; object -- works without it; what you lose is the tab itself and the
+; buttons R adds with BERT$AddUserButton. see docs/XLL-ONLY.md.
+
+Section "BERT tab on the ribbon" SecRibbon
+
+  SetOutPath "$INSTDIR"
+  File ..\Build\BERTRibbon2x64.dll
+  ExecWait 'regsvr32 /s "$INSTDIR\BERTRibbon2x64.dll"'
+
+SectionEnd
+
+;--------------------------------
 ; optional: the argument tooltip in the formula bar. excel draws that only
 ; for its own functions, so this installs the Excel-DNA IntelliSense add-in,
 ; which draws one for user-defined functions, plus an empty carrier add-in
@@ -559,6 +576,25 @@ SectionEnd
 
 Section "-post"
 
+  ; without the ribbon, nothing would load the xll -- the ribbon does that
+  ; on connect -- so excel has to be told about it directly. with the ribbon
+  ; installed, take that entry back out and leave the loading to it.
+
+  Call FindExcelOptionsKey
+  ${If} ${SectionIsSelected} ${SecRibbon}
+    Push '${BERT_XLL_VALUE}'
+    Call UnregisterExcelAddIn
+  ${Else}
+    ExecWait 'regsvr32 /s /u "$INSTDIR\BERTRibbon2x64.dll"'
+    Delete "$INSTDIR\BERTRibbon2x64.dll"
+    ${If} $ExcelKey == ""
+      MessageBox MB_OK|MB_ICONEXCLAMATION "BERT was installed without the ribbon tab, but Excel's add-in list could not be found, so the add-in was not enabled. Load it from File > Options > Add-ins > Manage Excel Add-ins > Browse:$\n$\n$INSTDIR\BERT64.xll" /SD IDOK
+    ${Else}
+      Push '${BERT_XLL_VALUE}'
+      Call RegisterExcelAddIn
+    ${EndIf}
+  ${EndIf}
+
   ${IfNot} ${SectionIsSelected} ${SecIntelliSense}
     Call FindExcelOptionsKey
     Push '${IS_XLAM_VALUE}'
@@ -577,6 +613,7 @@ SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "The BERT add-in, the R language controller and the console."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecRibbon} "The BERT tab on Excel's ribbon, with the console button and any buttons your R code adds. A COM add-in, registered with Excel separately from BERT itself. Everything else -- functions, the console, graphics -- works without it. Clear this box on a later run to remove it."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecIntelliSense} "Shows a description of your R functions and their arguments as you type a formula, using the Excel-DNA IntelliSense add-in (MIT licensed, installed and enabled in Excel alongside BERT). Clear this box on a later run to remove it."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -597,6 +634,16 @@ Function .onInit
   ${GetOptions} $R0 "/NO-HELP-FEATURE" $R1
   ${IfNot} ${Errors}
     !insertmacro UnselectSection ${SecIntelliSense}
+  ${EndIf}
+  ClearErrors
+  ${GetOptions} $R0 "/RIBBON" $R1
+  ${IfNot} ${Errors}
+    !insertmacro SelectSection ${SecRibbon}
+  ${EndIf}
+  ClearErrors
+  ${GetOptions} $R0 "/NO-RIBBON" $R1
+  ${IfNot} ${Errors}
+    !insertmacro UnselectSection ${SecRibbon}
   ${EndIf}
   Pop $R1
   Pop $R0
@@ -633,6 +680,8 @@ UninstallCheckExcelRunning:
   Push '${IS_XLAM_VALUE}'
   Call un.UnregisterExcelAddIn
   Push '${IS_XLL_VALUE}'
+  Call un.UnregisterExcelAddIn
+  Push '${BERT_XLL_VALUE}'
   Call un.UnregisterExcelAddIn
 
   Delete "$INSTDIR\BERT64.xll"
