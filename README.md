@@ -1,4 +1,4 @@
-[<img src="logo-transparent.svg">](https://bert-toolkit.com/)
+[<img src="https://raw.githubusercontent.com/SamLovick/Basic-Excel-R-Toolkit/master/logo-transparent.svg">](https://bert-toolkit.com/)
 
 About this fork
 ---------------
@@ -16,23 +16,40 @@ a particular R: `BERTModule` is compiled against R's graphics engine, whose
 version changes between R series, so the install ships one module per series
 and uses the one that matches. **Modules ship for 3.5, 4.2, 4.3, 4.4, 4.5
 and 4.6** -- the whole range the controller runs on -- so drawing works
-wherever the rest does. Strings are UTF-8 from end to end. The build is x64 only, on the v145 toolset with protobuf 5.29, linked
-statically so it needs no Visual C++ redistributable. The console runs on
-current Electron, Monaco and xterm. Your own functions can carry argument
-help, shown in Excel's function dialogs and in the formula bar -- see
-[docs/FUNCTION-HELP.md](docs/FUNCTION-HELP.md). Two long-standing faults are
-fixed along the way: a deadlock whenever an R function called back into Excel,
-which made the graphics device unusable, and a console that dropped any reply
-larger than 64k.
+wherever the rest does. Strings are UTF-8 from end to end. The build is x64
+only, on the v145 toolset with protobuf 5.29, linked statically so it needs
+no Visual C++ redistributable. The console runs on current Electron, Monaco
+and xterm. Your own functions can carry argument help, shown in Excel's
+function dialogs and in the formula bar -- see [function help][r5]. Two
+long-standing faults are fixed along the way: a deadlock whenever an R
+function called back into Excel, which made the graphics device unusable,
+and a console that dropped any reply larger than 64k.
+
+### The ribbon tab is optional
+
+BERT puts two things into Excel: the add-in proper, `BERT64.xll`, and a COM
+add-in that draws the BERT tab. The tab is a component on the installer's
+page, selected by default. Clear it -- or pass `/NO-RIBBON` to a silent
+install -- and you get an add-in that registers nothing with COM and has no
+entry in Excel's COM add-ins list for Excel to disable after a crash.
+
+Everything except the tab still works: functions in cells, the console,
+graphics, Excel references, the `EXCEL` object in R and function help. What
+goes with it is the tab itself and any buttons your R code adds with
+`BERT$AddUserButton`. The console button lives on the tab, so without it
+press CONTROL+SHIFT+R, or set `"openConsole": true` in `bert-config.json` to
+have the console open with Excel. See [running without the ribbon][r6].
 
 [Releases][r1] &middot; [Changelog][r2] &middot; [Building][r3]. The Julia
 controllers are untouched and unbuilt here; this work is about R. The whole
 change set is offered back to the upstream project as [pull request #220][r4].
 
 [r1]: https://github.com/SamLovick/Basic-Excel-R-Toolkit/releases/latest
-[r2]: CHANGELOG.md
-[r3]: docs/BUILDING.md
+[r2]: https://github.com/SamLovick/Basic-Excel-R-Toolkit/blob/master/CHANGELOG.md
+[r3]: https://github.com/SamLovick/Basic-Excel-R-Toolkit/blob/master/docs/BUILDING.md
 [r4]: https://github.com/sdllc/Basic-Excel-R-Toolkit/pull/220
+[r5]: https://github.com/SamLovick/Basic-Excel-R-Toolkit/blob/master/docs/FUNCTION-HELP.md
+[r6]: https://github.com/SamLovick/Basic-Excel-R-Toolkit/blob/master/docs/XLL-ONLY.md
 
 ---
 
@@ -120,7 +137,7 @@ Requirements (Building)
 -----------------------
 
 The notes below describe the original 2018 setup. For the current build,
-including how the R version is chosen, see [docs/BUILDING.md](docs/BUILDING.md).
+including how the R version is chosen, see [docs/BUILDING.md][r3].
 
 There are several third party tools and libraries used to build BERT:
 
