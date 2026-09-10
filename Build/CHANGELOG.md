@@ -69,10 +69,12 @@ Two things had to change to make that true, and both are worth knowing
 about even if you keep the ribbon:
 
 **The ribbon was what loaded the add-in.** It calls `RegisterXLL` as it
-connects, and nothing else did, so turning the ribbon off in Excel's COM
-add-ins dialog left you with no BERT at all rather than a reduced one. An
-install without the ribbon now registers `BERT64.xll` in Excel's own add-in
-list instead.
+connects, and nothing else did, so clearing "BERT2 Ribbon Menu" in Excel's
+COM add-ins dialog left you with no BERT at all rather than a reduced one --
+no functions, no console, nothing. Every install now registers `BERT64.xll`
+in Excel's own add-in list, ribbon or no ribbon, so turning the ribbon off
+in Excel leaves everything else working. The ribbon's own `RegisterXLL` is
+then never reached: it only runs when the add-in is not already loaded.
 
 **The ribbon was also the only source of Excel's `Application` pointer**,
 which drawing into a sheet and the `EXCEL` object in R both need. Without

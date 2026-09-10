@@ -78,11 +78,16 @@ registry at
 `HKCU\Software\Microsoft\Office\Excel\Addins\BERT2Ribbon.Connect`, where
 `LoadBehavior` is 3 for loaded and 0 for off.
 
-Note what that does *not* do on a normal install: the ribbon is what loads
-the xll, so turning it off there leaves you with no BERT at all until the
-xll is registered with Excel directly (File > Options > Add-ins, *Manage*
-**Excel Add-ins**, Browse to `BERT64.xll`). An install done the way the next
-section describes has already done that for you.
+That is enough on its own: the installer registers `BERT64.xll` in Excel's
+add-in list whichever way you left the components page, so the add-in goes
+on loading with the ribbon switched off.
+
+It was not always so. Before r17 -- and in the first build of r17 itself --
+the ribbon was the only thing that loaded the xll, and clearing that box
+left you with no BERT at all: no functions, no console, and nothing for a
+keyboard shortcut to reach. On an install like that, add the xll by hand
+once: File > Options > Add-ins, *Manage* **Excel Add-ins**, Go, Browse, and
+pick `BERT64.xll` from the install directory.
 
 ## Installing this way
 

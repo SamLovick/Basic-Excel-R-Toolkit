@@ -576,23 +576,25 @@ SectionEnd
 
 Section "-post"
 
-  ; without the ribbon, nothing would load the xll -- the ribbon does that
-  ; on connect -- so excel has to be told about it directly. with the ribbon
-  ; installed, take that entry back out and leave the loading to it.
+  ; the xll goes in Excel's own add-in list whether the ribbon is installed
+  ; or not. the ribbon loads the xll itself when it connects (RegisterXLL),
+  ; and used to be the only thing that did -- so clearing "BERT2 Ribbon
+  ; Menu" from Excel's COM add-ins dialog took the whole add-in with it,
+  ; functions and all. registered here as well, turning the ribbon off in
+  ; Excel leaves everything else working. the ribbon's own RegisterXLL then
+  ; never runs: it is only reached when the xll is not already loaded.
 
   Call FindExcelOptionsKey
-  ${If} ${SectionIsSelected} ${SecRibbon}
-    Push '${BERT_XLL_VALUE}'
-    Call UnregisterExcelAddIn
+  ${If} $ExcelKey == ""
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Excel's add-in list could not be found, so BERT was not enabled in Excel. Load it from File > Options > Add-ins > Manage Excel Add-ins > Browse:$\n$\n$INSTDIR\BERT64.xll" /SD IDOK
   ${Else}
+    Push '${BERT_XLL_VALUE}'
+    Call RegisterExcelAddIn
+  ${EndIf}
+
+  ${IfNot} ${SectionIsSelected} ${SecRibbon}
     ExecWait 'regsvr32 /s /u "$INSTDIR\BERTRibbon2x64.dll"'
     Delete "$INSTDIR\BERTRibbon2x64.dll"
-    ${If} $ExcelKey == ""
-      MessageBox MB_OK|MB_ICONEXCLAMATION "BERT was installed without the ribbon tab, but Excel's add-in list could not be found, so the add-in was not enabled. Load it from File > Options > Add-ins > Manage Excel Add-ins > Browse:$\n$\n$INSTDIR\BERT64.xll" /SD IDOK
-    ${Else}
-      Push '${BERT_XLL_VALUE}'
-      Call RegisterExcelAddIn
-    ${EndIf}
   ${EndIf}
 
   ${IfNot} ${SectionIsSelected} ${SecIntelliSense}
