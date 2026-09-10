@@ -25,9 +25,12 @@ button, so if the ribbon is installed later the buttons appear.
 That is the whole list. Functions in cells, the console, graphics, Excel
 references, the `EXCEL` object in R and function help all work.
 
-## Opening the console
+## Opening the console, and getting it back
 
-Set this in `bert-config.json`:
+The console button lives on the ribbon, so without the tab you need another
+way in. There are four; the first two cover most of it.
+
+**At startup.** Set this in `bert-config.json`:
 
 ```json
 "BERT": {
@@ -35,10 +38,51 @@ Set this in `bert-config.json`:
 }
 ```
 
-and the console opens with Excel. `EXCEL.EXE /x:BERT` does the same thing
-for a single run. The console is also a registered command, so
-`Application.Run "BERT.Console"` works from VBA, and the name can be typed
-into Excel's macro dialog (Alt+F8) or put on the quick access toolbar.
+and the console opens with Excel. `EXCEL.EXE /x:BERT` does the same for a
+single run.
+
+**CONTROL+SHIFT+R**, which is the shortcut BERT registers the console
+command with.
+
+**By name.** `BERT.Console` is a registered Excel command, so
+`Application.Run "BERT.Console"` runs it from VBA, from the Immediate
+window, or from a shape you draw on a sheet and assign a macro to. The same
+name can be typed into the macro dialog (ALT+F8) and run: Excel hides XLL
+commands from that list, but as its own documentation puts it, their names
+"can be entered anywhere a valid command name is required".
+
+**From R**, which suits a workbook that should open the console itself:
+
+```r
+ShowConsole <- function() EXCEL$Application$Run("BERT.Console")
+```
+
+### Closing it is not closing it
+
+Clicking the X on the console hides the window. The process stays running
+with R attached, so any of the routes above brings it back with the shell
+history and open files intact. If the process really has gone -- killed from
+Task Manager, say -- `BERT.Console` starts a new one.
+
+Verified with the ribbon disabled: the console opened with Excel, closing it
+with the X left the window hidden and the process alive, and running
+`BERT.Console` made it visible again. The keyboard shortcut is the one part
+not tested here, because the test harness cannot press keys.
+
+## Turning the ribbon off on an install you already have
+
+Excel: **File > Options > Add-ins**, set *Manage* to **COM Add-ins**, click
+**Go**, and clear **BERT2 Ribbon Menu**. That leaves it registered but not
+loaded, and Excel remembers the choice. The same switch lives in the
+registry at
+`HKCU\Software\Microsoft\Office\Excel\Addins\BERT2Ribbon.Connect`, where
+`LoadBehavior` is 3 for loaded and 0 for off.
+
+Note what that does *not* do on a normal install: the ribbon is what loads
+the xll, so turning it off there leaves you with no BERT at all until the
+xll is registered with Excel directly (File > Options > Add-ins, *Manage*
+**Excel Add-ins**, Browse to `BERT64.xll`). An install done the way the next
+section describes has already done that for you.
 
 ## Installing this way
 
