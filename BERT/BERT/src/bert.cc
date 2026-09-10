@@ -414,13 +414,26 @@ bool BERT::AcquireApplicationDispatch() {
   DebugOut("took the Application pointer from excel directly\n");
   UseApplicationDispatch(acquired);
 
+  // this one is ours: it came back AddRef'd, and nothing else will release
+  // it. a pointer from the ribbon belongs to the ribbon.
+
+  owns_application_dispatch_ = (application_dispatch_ == acquired);
+  if (!owns_application_dispatch_) acquired->Release();
+
   return true;
 
 }
 
 void BERT::UseApplicationDispatch(LPDISPATCH application_dispatch) {
 
-  if (!application_dispatch || application_dispatch == application_dispatch_) return;
+  if (!application_dispatch) return;
+
+  // first one wins. with the ribbon installed both sources fire -- we take
+  // one at load, the ribbon offers another as it connects -- and they are
+  // two pointers to the same Application. taking the second would marshal
+  // a second stream and drop the first, so ignore it.
+
+  if (application_dispatch_) return;
 
   application_dispatch_ = application_dispatch;
 
@@ -1267,5 +1280,12 @@ void BERT::Close() {
 
   // free marshalled pointer
   if (stream_pointer_) AtlFreeMarshalStream(stream_pointer_);
+
+  // and the Application pointer, if it was ours to hold
+  if (owns_application_dispatch_ && application_dispatch_) {
+    application_dispatch_->Release();
+    application_dispatch_ = 0;
+    owns_application_dispatch_ = false;
+  }
 
 }

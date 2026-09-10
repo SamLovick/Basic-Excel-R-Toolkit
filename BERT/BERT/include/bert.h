@@ -78,6 +78,10 @@ private:
    */
   LPDISPATCH application_dispatch_ = 0;
 
+  /** true when we acquired the Application pointer ourselves, so we hold a
+    * reference on it and have to give it back */
+  bool owns_application_dispatch_ = false;
+
   /** pointer to ribbon menu */
   LPDISPATCH ribbon_menu_dispatch_;
 
