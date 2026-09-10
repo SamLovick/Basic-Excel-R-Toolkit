@@ -14,9 +14,9 @@ you already have, from 3.5 up to 4.6. R is no longer bundled, and the
 installer finds your existing installation. Graphics is the one part tied to
 a particular R: `BERTModule` is compiled against R's graphics engine, whose
 version changes between R series, so the install ships one module per series
-and uses the one that matches. **Modules ship for R 4.5 and 4.6**; on other
-versions everything works except drawing.Strings are UTF-8 from end
-to end. The build is x64 only, on the v145 toolset with protobuf 5.29, linked
+and uses the one that matches. **Modules ship for 3.5, 4.2, 4.3, 4.4, 4.5
+and 4.6** -- the whole range the controller runs on -- so drawing works
+wherever the rest does. Strings are UTF-8 from end to end. The build is x64 only, on the v145 toolset with protobuf 5.29, linked
 statically so it needs no Visual C++ redistributable. The console runs on
 current Electron, Monaco and xterm. Your own functions can carry argument
 help, shown in Excel's function dialogs and in the formula bar -- see
