@@ -186,6 +186,7 @@ foreach ($f in "BERT64.xll", "BERTRibbon2x64.dll", "ControlR.exe") {
 }
 $dirs = "Console", "module", "startup"
 foreach ($f in $files) { if (-not (Test-Path (Join-Path $build $f))) { Fail "missing $f in Build" } }
+if (-not (Test-Path (Join-Path $root "README.md"))) { Fail "missing README.md in the repository root" }
 foreach ($d in $dirs) { if (-not (Test-Path (Join-Path $build $d))) { Fail "missing $d\ in Build" } }
 
 # ---- the optional function help add-in -------------------------------------
@@ -230,6 +231,10 @@ if (-not $SkipZip) {
   (Get-Content (Join-Path $here "bert-languages.template.json") -Raw).Replace('"@R_HOME@"', '""') |
     Set-Content (Join-Path $stage "bert-languages.json") -NoNewline
   Copy-Item (Join-Path $here "INSTALL-FROM-ZIP.md") $stage
+
+  # the project README ships too, from the repository root: the one in Build
+  # describes the build directory and is not for shipping
+  Copy-Item (Join-Path $root "README.md") $stage
   $zip = Join-Path $here "BERT-$Version-x64.zip"
   if (Test-Path $zip) { Remove-Item $zip -Force }
   Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -CompressionLevel Optimal

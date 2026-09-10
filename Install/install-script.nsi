@@ -499,6 +499,11 @@ CheckExcelRunning:
   SetOutPath "$INSTDIR"
   File ..\Build\Welcome.md
   File ..\Build\CHANGELOG.md
+
+  ; the project README, from the repository root rather than Build -- the one
+  ; in Build describes the build directory and is not for shipping
+  File ..\README.md
+
   File "bert2.ico"
 
 
@@ -705,6 +710,7 @@ UninstallCheckExcelRunning:
   Delete "$INSTDIR\ExcelDna.IntelliSense-License.txt"
   Delete "$INSTDIR\Welcome.md"
   Delete "$INSTDIR\CHANGELOG.md"
+  Delete "$INSTDIR\README.md"
   Delete "$INSTDIR\bert2.ico"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
