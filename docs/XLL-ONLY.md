@@ -44,12 +44,36 @@ single run.
 **CONTROL+SHIFT+R**, which is the shortcut BERT registers the console
 command with.
 
-**By name.** `BERT.Console` is a registered Excel command, so
-`Application.Run "BERT.Console"` runs it from VBA, from the Immediate
-window, or from a shape you draw on a sheet and assign a macro to. The same
-name can be typed into the macro dialog (ALT+F8) and run: Excel hides XLL
-commands from that list, but as its own documentation puts it, their names
-"can be entered anywhere a valid command name is required".
+**By name, from VBA.** `BERT.Console` is a registered Excel command:
+
+```vba
+Application.Run "BERT.Console"
+```
+
+from the Immediate window, from a macro, or from a shape on a sheet with a
+macro assigned. `Application.ExecuteExcel4Macro "BERT.Console()"` does the
+same thing and is what the ribbon button uses.
+
+Typing the name into the macro dialog (ALT+F8) does **not** work. That
+dialog resolves what you type in workbook scope -- it runs `!BERT.Console`
+-- and an XLL command is not registered in any workbook, so Excel answers
+"cannot run the macro". The C API documentation's line about command names
+being usable "anywhere a valid command name is required" is about XLM
+contexts, not that dialog.
+
+A shortcut of your own, if the registered one does not suit, is three lines
+in `PERSONAL.XLSB`:
+
+```vba
+Sub ShowBertConsole()
+    Application.Run "BERT.Console"
+End Sub
+
+' in ThisWorkbook, to bind it at startup
+Private Sub Workbook_Open()
+    Application.OnKey "^+R", "ShowBertConsole"
+End Sub
+```
 
 **From R**, which suits a workbook that should open the console itself:
 

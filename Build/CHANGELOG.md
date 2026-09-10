@@ -85,11 +85,18 @@ for that pointer itself when nobody has handed one over.
 
 **CONTROL+SHIFT+R** opens it, on every install. Without the ribbon there is
 no console button, and the console hides rather than closes when you click
-its X, so there had to be a way back to it; the shortcut is the shortest
-one. `Application.Run "BERT.Console"` from VBA, the same name typed into
-the macro dialog (ALT+F8), and `openConsole` in `bert-config.json` all do
-the same job -- the last of those was always there and is now in the
-config template with the rest of the settings.
+its X, so there had to be a way back to it.
+
+Two other routes do the same job. `openConsole` in `bert-config.json` opens
+the console with Excel; it was always there and is now in the config
+template with the rest of the settings. And `Application.Run
+"BERT.Console"` runs it from VBA or the Immediate window, which is also the
+way to hang it off a button or a shortcut of your own.
+
+Typing the name into the macro dialog (ALT+F8) does not work, whatever the
+C API documentation implies: that dialog looks the name up in workbook
+scope, and an XLL command is registered in the add-in's context, not a
+workbook's.
 
 `docs/XLL-ONLY.md` has the whole picture.
 
