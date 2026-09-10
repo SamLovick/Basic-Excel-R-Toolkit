@@ -49,6 +49,48 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## 2.4.3-r17
+
+### The ribbon tab is now optional
+
+BERT ships two things Excel loads: the add-in itself, `BERT64.xll`, and a
+COM add-in that draws the BERT tab. The tab is now a component on the
+installer's page, selected by default. Clear it -- or pass `/NO-RIBBON` to
+a scripted install -- for an add-in that registers nothing with COM, has no
+entry in Excel's COM add-ins list for Excel to disable after a crash, and
+touches nothing outside its own directory.
+
+Nothing else is lost. Functions in cells, the console, graphics, Excel
+references, the `EXCEL` object in R and function help all work without it.
+What goes is the tab, and the buttons R code adds with
+`BERT$AddUserButton`, which are ribbon controls and have nowhere to live.
+
+Two things had to change to make that true, and both are worth knowing
+about even if you keep the ribbon:
+
+**The ribbon was what loaded the add-in.** It calls `RegisterXLL` as it
+connects, and nothing else did, so turning the ribbon off in Excel's COM
+add-ins dialog left you with no BERT at all rather than a reduced one. An
+install without the ribbon now registers `BERT64.xll` in Excel's own add-in
+list instead.
+
+**The ribbon was also the only source of Excel's `Application` pointer**,
+which drawing into a sheet and the `EXCEL` object in R both need. Without
+it, plotting from a cell quietly drew nothing. The add-in now asks Excel
+for that pointer itself when nobody has handed one over.
+
+### The console has a keyboard shortcut
+
+**CONTROL+SHIFT+R** opens it, on every install. Without the ribbon there is
+no console button, and the console hides rather than closes when you click
+its X, so there had to be a way back to it; the shortcut is the shortest
+one. `Application.Run "BERT.Console"` from VBA, the same name typed into
+the macro dialog (ALT+F8), and `openConsole` in `bert-config.json` all do
+the same job -- the last of those was always there and is now in the
+config template with the rest of the settings.
+
+`docs/XLL-ONLY.md` has the whole picture.
+
 ## 2.4.3-r16
 
 ### Functions can take 64 arguments, up from 16
