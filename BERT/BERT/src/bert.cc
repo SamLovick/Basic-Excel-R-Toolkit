@@ -262,6 +262,34 @@ void BERT::ShowConsole() {
   }
 }
 
+void BERT::BindConsoleKey(bool bind) {
+
+  // "^+r" is excel's own key syntax, the same one VBA's Application.OnKey
+  // takes: control, shift, r.
+
+  XLOPER12 key, macro, result;
+  Convert::StringToXLOPER(&key, "^+r", false);
+
+  int err = 0;
+
+  if (bind) {
+    Convert::StringToXLOPER(&macro, "BERT.Console", false);
+    err = Excel12(xlcOnKey, &result, 2, &key, &macro);
+    if (macro.xltype & xltypeStr) delete[] macro.val.str;
+  }
+  else {
+
+    // one argument gives the key back to excel
+
+    err = Excel12(xlcOnKey, &result, 1, &key);
+  }
+
+  if (err) DebugOut("ON.KEY for the console returned %d\n", err);
+
+  if (key.xltype & xltypeStr) delete[] key.val.str;
+
+}
+
 namespace {
 
   /**

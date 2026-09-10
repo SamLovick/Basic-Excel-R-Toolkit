@@ -41,8 +41,12 @@ way in. There are four; the first two cover most of it.
 and the console opens with Excel. `EXCEL.EXE /x:BERT` does the same for a
 single run.
 
-**CONTROL+SHIFT+R**, which is the shortcut BERT registers the console
-command with.
+**CONTROL+SHIFT+R.** BERT binds that to the console command at load, with
+ON.KEY. It does not use `xlfRegister`'s shortcut field, which looks
+inviting and does not work: the key fires, but Excel then resolves the
+command in workbook scope and says "cannot run the macro
+'!BERT.Console'". ON.KEY runs the name through the same path as
+`ExecuteExcel4Macro`, which is how the ribbon button reaches it.
 
 **By name, from VBA.** `BERT.Console` is a registered Excel command:
 
@@ -90,8 +94,8 @@ Task Manager, say -- `BERT.Console` starts a new one.
 
 Verified with the ribbon disabled: the console opened with Excel, closing it
 with the X left the window hidden and the process alive, and running
-`BERT.Console` made it visible again. The keyboard shortcut is the one part
-not tested here, because the test harness cannot press keys.
+`BERT.Console` made it visible again. CONTROL+SHIFT+R was tested by hand,
+which is the only way to test a keystroke here.
 
 ## Turning the ribbon off on an install you already have
 

@@ -434,6 +434,11 @@ BOOL WINAPI xlAutoOpen(void)
 
   bert->AcquireApplicationDispatch();
 
+  // CONTROL+SHIFT+R for the console. see BERT::BindConsoleKey for why this
+  // is not the shortcut field in the registration table.
+
+  bert->BindConsoleKey();
+
   return true;
 }
 
@@ -445,6 +450,7 @@ void WINAPI xlAutoFree12(LPXLOPER12 pxFree)
 
 BOOL WINAPI xlAutoClose(void)
 {
+  BERT::Instance()->BindConsoleKey(false);
   BERT::Instance()->Close();
   return true;
 }

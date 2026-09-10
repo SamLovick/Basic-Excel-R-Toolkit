@@ -242,10 +242,21 @@ public:
    */
   static BOOL CALLBACK FocusExcelWindowCallback(HWND hwnd, LPARAM lParam);
 
-  /** 
-   * opens the console, creating the process if necessary 
+  /**
+   * opens the console, creating the process if necessary
    */
   void ShowConsole();
+
+  /**
+   * binds CONTROL+SHIFT+R to the console command, with ON.KEY.
+   *
+   * not with xlfRegister's shortcut field: a shortcut registered there does
+   * fire, but excel then resolves the command in workbook scope and reports
+   * "cannot run the macro '!BERT.Console'". ON.KEY sends the name through
+   * the same path as ExecuteExcel4Macro, which is what the ribbon button
+   * uses and which does resolve it. pass false to give the key back.
+   */
+  void BindConsoleKey(bool bind = true);
 
   /** true if the console process we started is still running */
   bool ConsoleProcessRunning();

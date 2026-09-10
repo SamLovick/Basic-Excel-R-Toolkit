@@ -49,6 +49,24 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## 2.4.3-r18
+
+### The console shortcut works now
+
+r17 registered CONTROL+SHIFT+R through `xlfRegister`'s shortcut field,
+which looks like the obvious way to do it and is the wrong one. The key
+fired, but Excel then looked the command up in workbook scope and put an
+error dialog on screen -- "cannot run the macro '!BERT.Console'" -- because
+an XLL command belongs to the add-in's context, not a workbook's.
+
+BERT now binds the key itself at load, with ON.KEY, which runs the name
+through the same path as `ExecuteExcel4Macro` -- the path the ribbon button
+has always used. The binding is released when the add-in unloads, so Excel
+gets the key back.
+
+If you are on r17, this is worth taking: there, the shortcut did nothing
+except raise an error.
+
 ## 2.4.3-r17
 
 ### The ribbon tab is now optional
