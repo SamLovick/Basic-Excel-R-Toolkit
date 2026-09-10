@@ -49,6 +49,31 @@ If you run an R with no module -- a future series, say -- BERT falls back to
 another module, which still loads and still provides references and the
 helpers; only drawing is lost, and the console says so at startup.
 
+## 2.4.3-r19
+
+Documentation only: nothing about how BERT behaves is different from r18.
+
+### The README is installed with everything else
+
+It sits beside `CHANGELOG.md` and `Welcome.md` in the install directory, and
+in the zip. Its links were relative -- fine in a checkout, dead everywhere
+else -- so they are now full addresses into the repository, the logo
+included.
+
+### The README says what the ribbon component does
+
+Clearing the **BERT tab on the ribbon** box is a choice the installer has
+offered since r17, and the README had never mentioned it. It now covers what
+you keep without the tab (functions, console, graphics, Excel references, the
+`EXCEL` object in R, function help), what goes with it (the tab, and buttons
+added by `BERT$AddUserButton`), and how to open the console when the button
+is gone.
+
+It also claimed **"Modules ship for R 4.5 and 4.6"**, which stopped being
+true at r11, when a module for every series went in. Corrected: 3.5, 4.2,
+4.3, 4.4, 4.5 and 4.6, which is what the table at the top of this file has
+said all along.
+
 ## 2.4.3-r18
 
 ### The console shortcut works now
