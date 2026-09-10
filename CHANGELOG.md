@@ -67,6 +67,11 @@ gets the key back.
 If you are on r17, this is worth taking: there, the shortcut did nothing
 except raise an error.
 
+Verified on both machines here: the shortcut opens the console on the
+development machine, and r18 installs and runs on a second machine with no
+development tools on it. A keystroke is the one thing no test harness on
+this project can exercise, so that check is by hand, every time.
+
 ## 2.4.3-r17
 
 ### The ribbon tab is now optional
